@@ -1,0 +1,20 @@
+/* 
+ * File:   out.h
+ * Author: joshua
+ *
+ * Created on 27. Februar 2015, 17:16
+ */
+
+#ifndef OUT_H
+#define	OUT_H
+
+#include <stdlib.h>
+#include <string>
+#include <sstream>
+
+
+template <typename T>
+std::string to_string(T value);
+
+#endif	/* OUT_H */
+
