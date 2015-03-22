@@ -1,0 +1,12 @@
+# CMake config
+# knx server and client project
+
+# min version
+cmake_minimum_required(VERSION 2.8)
+
+# project name
+project(knx)
+
+# sub
+add_subDirectory (server/)
+add_subDirectory (clinent/)
