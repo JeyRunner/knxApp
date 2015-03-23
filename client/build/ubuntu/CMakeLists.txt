@@ -2,7 +2,7 @@
 # files
 # dir
 set (CMAKE_CURRENT_SOURCE_DIR ../../)
-set (srcDir ${CMAKE_CURRENT_SOURCE_DIR})
+set (srcDir ${CMAKE_CURRENT_SOURCE_DIR}src/)
 set (srcDirKnx ${srcDir}knx/)
 file( GLOB srcs ${srcDir}*.cpp ${srcDir}*.h   ${srcDirKnx}*.cpp ${srcDirKnx}*.h )
 file( GLOB srcsLib ${srcDir}*.cpp ${srcDir}*.h   ${srcDirKnx}*.cpp ${srcDirKnx}*.h )

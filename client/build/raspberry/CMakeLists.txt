@@ -11,7 +11,7 @@ project( knxApp )
 
 # var
 set (CMAKE_CURRENT_SOURCE_DIR 	../../)
-set (srcDir 			${CMAKE_CURRENT_SOURCE_DIR})
+set (srcDir 			${CMAKE_CURRENT_SOURCE_DIR}src/)
 set (srcDirKnx 			${srcDir}knx/)
 
 set (PANUI_ROOT 		/home/dev/c++/panui/)

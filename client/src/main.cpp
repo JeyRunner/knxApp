@@ -14,6 +14,7 @@
 #include <Ui.h>
 #include <Text.h>
 #include <Box.h>
+#include <Style.h>
 
 using namespace std;
 
@@ -46,6 +47,14 @@ int main(int argc, char **argv)
 
     headline->text("Knx");
     root->addChild(headline);
+
+    // style
+    Style::getRule("*")->textSize->set(50);
+
+    // in android other font path
+    #ifdef pl_andr
+    Style::getRule("*")->textFamily->set("FreeSans.ttf");
+    #endif
 
 
     // open screen

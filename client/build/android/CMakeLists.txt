@@ -4,8 +4,8 @@ set (target main)
 
 
 # source files
-set (CMAKE_CURRENT_SOURCE_DIR ../../)
-set (srcDir ${CMAKE_CURRENT_SOURCE_DIR})
+set (CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../)
+set (srcDir ${CMAKE_CURRENT_SOURCE_DIR}src/)
 file( GLOB srcs ${srcDir}*.cpp ${srcDir}*.h   ${srcDir}knx/*.cpp ${srcDir}knx/*.h  ${srcDir}knx/*.hpp  ${srcDir}SDL/*.cpp)
 
 # var
@@ -30,7 +30,7 @@ set (ANDROID_SYSROOT		${ANDROID_TOOLCHAIN}/sysroot/usr )
 set (ANDROID_SYSROOT_LIB  	${ANDROID_SYSROOT}/lib )
 set (ANDROID_SYSROOT_INCLUDE  	${ANDROID_SYSROOT}/include )
 set (GCC_NAME 			arm-linux-androideabi-gcc)
-set (ANDROID_SDL_PATH		${CMAKE_CURRENT_SOURCE_DIR}/SDL2/src/main/android )
+set (ANDROID_SDL_PATH		${srcDir}SDL2/src/main/android )
 set (LIB_FREETYPE_STATIC	/home/joshua/Dokumente/android/android_libs/freetype2/objs/.libs/)
 
 # compiler
@@ -48,7 +48,7 @@ add_library (${target} SHARED ${srcs} ${srcSDL})
 
 
 # set the output directory for the .so files to point to the android project's 'lib/[cpuarch] directory
-set(ANDROID_SO_OUTDIR ${CMAKE_CURRENT_SOURCE_DIR}/android/libs/${ANDROID_NDK_CPU})
+set(ANDROID_SO_OUTDIR ${CMAKE_CURRENT_SOURCE_DIR}android/libs/${ANDROID_NDK_CPU})
 set_target_properties(${target} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${ANDROID_SO_OUTDIR})
 set_target_properties(${target} PROPERTIES LIBRARY_OUTPUT_DIRECTORY_RELEASE ${ANDROID_SO_OUTDIR})
 set_target_properties(${target} PROPERTIES LIBRARY_OUTPUT_DIRECTORY_DEBUG ${ANDROID_SO_OUTDIR})

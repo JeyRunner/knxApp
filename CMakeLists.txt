@@ -9,4 +9,4 @@ project(knx)
 
 # sub
 add_subDirectory (server/)
-add_subDirectory (clinent/)
+add_subDirectory (client/)

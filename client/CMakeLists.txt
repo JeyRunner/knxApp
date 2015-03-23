@@ -5,7 +5,7 @@
 cmake_minimum_required(VERSION 2.8)
 
 # project name
-project( knxApp )
+project( knxClient )
 
 # sub
 add_subDirectory (build/android)
