@@ -8,5 +8,6 @@ cmake_minimum_required(VERSION 2.8)
 project(knx)
 
 # sub
+add_subDirectory (protocol/)
 add_subDirectory (server/)
 add_subDirectory (client/)

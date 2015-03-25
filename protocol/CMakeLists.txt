@@ -1,2 +1,2 @@
 ## protocol source
-file( GLOB srcs src/*.h src/*.cpp)
+file( GLOB srcProtocol src/*.h src/*.cpp)

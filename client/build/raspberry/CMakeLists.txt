@@ -10,16 +10,18 @@ project( knxApp )
 
 
 # var
-set (CMAKE_CURRENT_SOURCE_DIR 	../../)
-set (srcDir 			${CMAKE_CURRENT_SOURCE_DIR}src/)
-set (srcDirKnx 			${srcDir}knx/)
+set (CMAKE_CURRENT_SOURCE_DIR 	${CMAKE_CURRENT_SOURCE_DIR}../../)
+set (srcDir 					${CMAKE_CURRENT_SOURCE_DIR}src/)
+set (srcDirKnx 					${srcDir}knx/)
+set (srcDirProtocol				${CMAKE_CURRENT_SOURCE_DIR}../protocol/src/)
 
-set (PANUI_ROOT 		/home/dev/c++/panui/)
-set (PANUI_ROOT_LIB 		${PANUI_ROOT}build/raspberry/)
+set (PANUI_ROOT 				/home/dev/c++/panui/)
+set (PANUI_ROOT_LIB 			${PANUI_ROOT}build/raspberry/)
 
 
 # file
 file( GLOB srcs ${srcDir}*.cpp ${srcDir}*.h   ${srcDirKnx}*.cpp ${srcDirKnx}*.h )
+file( GLOB srcProtocol ${srcDirProtocol}*.cpp ${srcDirProtocol}*.h)
 
 # include
 include_directories( /usr/local/include/freetype2 )
@@ -60,7 +62,7 @@ SET(EXECUTABLE_OUTPUT_PATH raspberry/)#${PROJECT_BINARY_DIR}/ubuntu)
 
 # linux
 # create executable
-add_executable (knxApp ${srcs})
+add_executable (knxApp ${srcProtocol} ${srcs})
 
 
 # link libs

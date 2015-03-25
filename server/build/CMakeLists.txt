@@ -1,10 +1,13 @@
 
 # files
 # dir
-set (CMAKE_CURRENT_SOURCE_DIR ../ )
-set (srcDir ${CMAKE_CURRENT_SOURCE_DIR}src/)
-set (srcDirKnx ${srcDir}knx/)
+set (CMAKE_CURRENT_SOURCE_DIR 	../ )
+set (srcDir 					${CMAKE_CURRENT_SOURCE_DIR}src/)
+set (srcDirKnx 					${srcDir}knx/)
+set (srcDirProtocol				${CMAKE_CURRENT_SOURCE_DIR}../protocol/src/)
+
 file( GLOB srcs ${srcDir}*.cpp ${srcDir}*.h   ${srcDirKnx}*.cpp ${srcDirKnx}*.h )
+file( GLOB srcProtocol ${srcDirProtocol}*.cpp ${srcDirProtocol}*.h)
 
 # include
 include_directories( /usr/local/include )
@@ -34,7 +37,7 @@ SET(EXECUTABLE_OUTPUT_PATH )
 
 # linux
 # create executable
-add_executable (knxServer ${srcs})
+add_executable (knxServer ${srcProtocol} ${srcs})
 
 
 # link libs

@@ -4,9 +4,12 @@ set (target main)
 
 
 # source files
-set (CMAKE_CURRENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../)
-set (srcDir ${CMAKE_CURRENT_SOURCE_DIR}src/)
+set (CMAKE_CURRENT_SOURCE_DIR 	${CMAKE_CURRENT_SOURCE_DIR}/../../)
+set (srcDir 					${CMAKE_CURRENT_SOURCE_DIR}src/)
+set (srcDirProtocol				${CMAKE_CURRENT_SOURCE_DIR}../protocol/src/)
+
 file( GLOB srcs ${srcDir}*.cpp ${srcDir}*.h   ${srcDir}knx/*.cpp ${srcDir}knx/*.h  ${srcDir}knx/*.hpp  ${srcDir}SDL/*.cpp)
+file( GLOB srcProtocol ${srcDirProtocol}*.cpp ${srcDirProtocol}*.h)
 
 # var
 set (ANDROID_NDK_CPU		armeabi-v7a)
@@ -24,17 +27,17 @@ set (LINK_LIBS			SDL2 GLESv1_CM GLESv2 log android c stdc++ panui gnustl_shared 
 
 # ### android #################################################################################################
 # var
-set (ANDROID_TOOLCHAIN 		/home/joshua/Dokumente/android/android-toolchain )
+set (ANDROID_TOOLCHAIN 			/home/joshua/Dokumente/android/android-toolchain )
 set (ANDROID_TOOLCHAIN_INCLUDE	${ANDROID_TOOLCHAIN}/include )
-set (ANDROID_SYSROOT		${ANDROID_TOOLCHAIN}/sysroot/usr )
-set (ANDROID_SYSROOT_LIB  	${ANDROID_SYSROOT}/lib )
+set (ANDROID_SYSROOT			${ANDROID_TOOLCHAIN}/sysroot/usr )
+set (ANDROID_SYSROOT_LIB  		${ANDROID_SYSROOT}/lib )
 set (ANDROID_SYSROOT_INCLUDE  	${ANDROID_SYSROOT}/include )
-set (GCC_NAME 			arm-linux-androideabi-gcc)
-set (ANDROID_SDL_PATH		${srcDir}SDL2/src/main/android )
-set (LIB_FREETYPE_STATIC	/home/joshua/Dokumente/android/android_libs/freetype2/objs/.libs/)
+set (GCC_NAME 					arm-linux-androideabi-gcc)
+set (ANDROID_SDL_PATH			${srcDir}SDL2/src/main/android )
+set (LIB_FREETYPE_STATIC		/home/joshua/Dokumente/android/android_libs/freetype2/objs/.libs/)
 
 # compiler
-set (CMAKE_CXX_COMPILER 	${ANDROID_TOOLCHAIN}/bin/${GCC_NAME})
+set (CMAKE_CXX_COMPILER 		${ANDROID_TOOLCHAIN}/bin/${GCC_NAME})
 
 # SDL files
 file(GLOB srcSDL ${srcDir}/SDL/*.cpp )
@@ -44,7 +47,7 @@ link_directories(${ANDROID_SYSROOT_LIB})
 link_directories(${LIB_FREETYPE_STATIC})
 
 # create lib
-add_library (${target} SHARED ${srcs} ${srcSDL})
+add_library (${target} SHARED ${srcProtocol} ${srcs} ${srcSDL})
 
 
 # set the output directory for the .so files to point to the android project's 'lib/[cpuarch] directory
@@ -66,30 +69,30 @@ include_directories(${ANDROID_SDL_PATH})
 # copy shared libraries over from the Android toolchain directory
 # FIXME: this should be automated as post-build-step by invoking the ndk-depends command
 # to find out the .so's, and copy them over
-file(COPY ${ANDROID_SYSROOT_LIB}/libm.so DESTINATION ${ANDROID_SO_OUTDIR})
-file(COPY ${ANDROID_SYSROOT_LIB}/liblog.so DESTINATION ${ANDROID_SO_OUTDIR})
-file(COPY ${ANDROID_SYSROOT_LIB}/libdl.so DESTINATION ${ANDROID_SO_OUTDIR})
-file(COPY ${ANDROID_SYSROOT_LIB}/libc.so DESTINATION ${ANDROID_SO_OUTDIR})
-file(COPY ${ANDROID_SYSROOT_LIB}/libandroid.so DESTINATION ${ANDROID_SO_OUTDIR})
-file(COPY ${ANDROID_SYSROOT_LIB}/libGLESv2.so DESTINATION ${ANDROID_SO_OUTDIR})
-file(COPY ${ANDROID_SYSROOT_LIB}/libEGL.so DESTINATION ${ANDROID_SO_OUTDIR})
-file(COPY ${ANDROID_SYSROOT_LIB}/libSDL2.so DESTINATION ${ANDROID_SO_OUTDIR})
-file(COPY ${ANDROID_SYSROOT_LIB}/libstdc++.so DESTINATION ${ANDROID_SO_OUTDIR})
-file(COPY ${ANDROID_SYSROOT_LIB}/libc.so DESTINATION ${ANDROID_SO_OUTDIR})
+file(COPY ${ANDROID_SYSROOT_LIB}/libm.so 		DESTINATION ${ANDROID_SO_OUTDIR})
+file(COPY ${ANDROID_SYSROOT_LIB}/liblog.so 		DESTINATION ${ANDROID_SO_OUTDIR})
+file(COPY ${ANDROID_SYSROOT_LIB}/libdl.so 		DESTINATION ${ANDROID_SO_OUTDIR})
+file(COPY ${ANDROID_SYSROOT_LIB}/libc.so 		DESTINATION ${ANDROID_SO_OUTDIR})
+file(COPY ${ANDROID_SYSROOT_LIB}/libandroid.so 	DESTINATION ${ANDROID_SO_OUTDIR})
+file(COPY ${ANDROID_SYSROOT_LIB}/libGLESv2.so 	DESTINATION ${ANDROID_SO_OUTDIR})
+file(COPY ${ANDROID_SYSROOT_LIB}/libEGL.so 		DESTINATION ${ANDROID_SO_OUTDIR})
+file(COPY ${ANDROID_SYSROOT_LIB}/libSDL2.so 	DESTINATION ${ANDROID_SO_OUTDIR})
+file(COPY ${ANDROID_SYSROOT_LIB}/libstdc++.so 	DESTINATION ${ANDROID_SO_OUTDIR})
+file(COPY ${ANDROID_SYSROOT_LIB}/libc.so 		DESTINATION ${ANDROID_SO_OUTDIR})
 
 
 
 
 # ### panui ###################################################################################################
 add_definitions    (-Dpl_andr)
-include_directories( ${PANUI_PATH} )
-include_directories( ${PANUI_INCLUDE} )
-include_directories( ${ANDROID_SYSROOT_INCLUDE}/freetype2)
-file(COPY 	     ${PANUI_LIBFILE_PATH}/libpanui.so DESTINATION ${ANDROID_SO_OUTDIR})
-file(COPY 	     ${LIB_FREETYPE_STATIC}/libfreetype.a DESTINATION ${ANDROID_SO_OUTDIR})
-file(COPY 	     ${PANUI_LIBFILE_PATH}/libgnustl_shared.so DESTINATION ${ANDROID_SO_OUTDIR})
-link_directories   ( ${PANUI_LIBFILE_PATH})
-add_definitions (   -DGLM_FORCE_RADIANS)
+include_directories( 	${PANUI_PATH} )
+include_directories( 	${PANUI_INCLUDE} )
+include_directories( 	${ANDROID_SYSROOT_INCLUDE}/freetype2)
+file(COPY 	     		${PANUI_LIBFILE_PATH}/libpanui.so 			DESTINATION ${ANDROID_SO_OUTDIR})
+file(COPY 	     		${LIB_FREETYPE_STATIC}/libfreetype.a 		DESTINATION ${ANDROID_SO_OUTDIR})
+file(COPY 	     		${PANUI_LIBFILE_PATH}/libgnustl_shared.so 	DESTINATION ${ANDROID_SO_OUTDIR})
+link_directories( 		${PANUI_LIBFILE_PATH})
+add_definitions (   	-DGLM_FORCE_RADIANS)
 
 
 
