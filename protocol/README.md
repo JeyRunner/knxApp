@@ -26,7 +26,7 @@ Byte    |Description
 #### Knx Tunnel Packet Datatypes
 Hex     |Description    |Data(6.Byte) (Hex) Description
 --------|----------------------------------
-01      |switch data    |00 - off \| 01 - on
+01      |switch data    |00 - off; 01 - on
 02      |dim data       |
 
 <br>
