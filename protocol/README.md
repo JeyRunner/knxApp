@@ -24,10 +24,10 @@ Byte    |Description
 ...     |Data
 
 #### Knx Tunnel Packet Datatypes
-Hex     |Description    |Data(6.Byte) (Hex) Description
---------|----------------------------------
-01      |switch data    |00 - off; 01 - on
-02      |dim data       |
+Datatype|Description    |Data(6.Byte)
+--------|---------------|-------------------
+0x01    |switch data    |0x00 - off; 0x01 - on
+0x02    |dim data       |
 
 <br>
 ### Knx Device
