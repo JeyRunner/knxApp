@@ -11,6 +11,7 @@
  */
 
 #include "Client.h"
+
 using namespace home;
 
 
@@ -25,24 +26,37 @@ Client::Client(string ip, int port)
 // -- INIT ------------------------------
 void Client::init()
 {
+    const SSL_METHOD  *method;
 
+    // init lib
+    SSL_library_init();
+
+    OpenSSL_add_all_algorithms();   // load cryptos...
+    SSL_load_error_strings();       // register error
+    method = SSLv3_client_method(); // Create new client-method instance
+    ctx = SSL_CTX_new(method);      // create new context
+    if (ctx == NULL)
+    {
+        error("[CLIE] ssl ctx new [ERR]");
+        // ERR_print_errors(stderr);
+    }
 }
 
 
 // -- CONNECT TO SERVER -----------------
-bool Client::connect()
+bool Client::connectToServer()
 {
-    cout << "[... ][client] connect to server" << endl;
+    cout << "[CLIE] connect to server [...]" << endl;
 
     // check host ip
     host = gethostbyname(serverIp.c_str());
     if (host == NULL)
     {
-        error("[ERR ][client] ip '" + string(host->h_name) + "' exists");
+        error("[CLIE] ip '" + serverIp + "' exists [ERR]");
         return false;
     }
     else
-        cout << "[ OK ][client] ip '" + string(host->h_name) + "' exists" << endl;
+        cout << "[CLIE] ip '" + string(host->h_name) + "' exists [OK]" << endl;
 
 
     // server address
@@ -52,30 +66,48 @@ bool Client::connect()
 
 
     // create socket
-    sock = socket(AF_INET, SOCK_DGRAM, 0);
+    sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0)
     {
-        error("[ERR ][client] open socket");
+        error("[CLIE] open socket [ERR]");
+        perror("[CLIE] open socket [ERR]");
         return false;
     }
 
 
-    // client address
-    clientAddr.sin_family = AF_INET;
-    clientAddr.sin_addr.s_addr = INADDR_ANY;
-    clientAddr.sin_port = htons(serverPort);
-
-
-    // bind
-    int r = bind(sock, (struct sockaddr *) &clientAddr, sizeof(clientAddr));
+    // connect to server
+    int r = connect(sock, (struct sockaddr*)&serverAddr, sizeof(serverAddr)); //bind(sockServer, (struct sockaddr *) &clientAddr, sizeof(clientAddr));
     if (r < 0)
     {
-        error("[ERR ][client] bind socket");
+        error("[CLIE] connect socket to server [ERR]");
+        perror("[CLIE] connect socket to server [ERR]");
         return false;
     }
+    else
+    {
+        cout << "[CLIE] connect [OK]" << endl;
+    }
 
-    // var
-    lenCli = sizeof(clientAddr);
+
+    // ssl -------------------------
+    ssl = SSL_new(ctx);     // create new ssl connection
+    SSL_set_fd(ssl, sock);  // attach socket descriptor
+
+    // ssl connect
+    if ( SSL_connect(ssl) < 0)
+    {
+        error("[CLIE] ssl connect [ERR]");
+        // ERR_print_errors(stderr);
+        connected = false;
+        return      false;
+    }
+    else
+    {
+        cout << "[CLIE] ssl connect [OK]" << endl;
+    }
+
+    // show certificates from server
+    printCertificates(ssl);
 
     // start receive loop
     connected = true;
@@ -90,6 +122,9 @@ bool Client::disconnect()
     // stop receive loop
     connected = false;
 
+    // close ssl
+    SSL_free(ssl);
+
     // close socket
     close(sock);
 }
@@ -100,19 +135,19 @@ bool Client::disconnect()
 bool Client::startReceiveThread()
 {
     int result;
-    result = pthread_create(&thread_receive_id  /*get thread id*/,
-            NULL                    /*thread params => default*/,
-            &thread_receive       /*thread function*/,
-            this                    /*transpher classes to thread*/);
+    result = pthread_create(&thread_receive_id /* get thread id */,
+                            NULL               /* thread params => default */,
+                            &thread_receive    /* thread function */,
+                            this               /* transpher classes to thread */);
     // check if successful
     switch (result)
     {
         case 0:
-            cout << "[ OK ][client] create receive thread \n";
+            cout << "[CLIE] create receive thread [OK] \n";
             break;
 
         default:
-            error("[client] create receive thread [ERR] \n");
+            error("[CLIE] create receive thread [ERR] \n");
     }
 }
 
@@ -135,12 +170,14 @@ void Client::receiveLoop()
     Packet *packet;
 
     // receive
-    receiveBytes(buffer, 30);
+    if (receiveBytes(buffer, 30))
+    {
+        // get packet
+        packet = PacketFactory::createPacket(buffer);
 
-    // get packet
-    packet = PacketFactory::createPacket(buffer);
-
-    // @TODO check packet type
+        // call event
+        onReceiveFunc(packet);
+    }
 }
 
 
@@ -149,38 +186,62 @@ void Client::receiveLoop()
 // -- SEND RECEIVE -----------------------------------
 bool Client::sendBytes(char buffer[], int len)
 {
-    int r = sendto(  sock, buffer, len, 0,
-            (struct sockaddr *) &serverAddr,
-            sizeof (serverAddr));
-    if(r < 0)
-    {
-        error("[ERR ][client] send");
-        return false;
-    }
-    else
-        return true;
+    int r = SSL_write(ssl, buffer, len);
 
-    // @TODO decrypt before send
+    // error
+    if (r < 0)
+    {
+        char errBuff[256];
+        int err = SSL_get_error(ssl, r);
+        ERR_error_string(ERR_get_error(), errBuff);
+
+        error("[CLIE] ssl write '" + string(errBuff) + "' (" + to_string(err) + ") [ERR]");
+        disconnect();
+    }
+
+    // all fine
+    else
+    {
+        return true;
+    }
 }
 
 bool Client::receiveBytes(char buffer[], int len)
 {
-    int lenCli = sizeof (clientAddr);
-
     // clear buffer
     memset(buffer, 0, len);
 
-    int r = recvfrom( sock, buffer, len /* buffer size */, 0,
-            ( sockaddr *) &clientAddr,(socklen_t*) &lenCli );
-    if(r < 0)
+    int numBytes = SSL_read(ssl, buffer, len);
+
+    // error
+    if (numBytes < 0)
     {
-        error("[ERR ][client] receive ");
+        char errBuff[256];
+        int err = SSL_get_error(ssl, numBytes);
+        ERR_error_string(ERR_get_error(), errBuff);
+
+        error("[CLIE] ssl read '" + string(errBuff) + "' (" + to_string(err) + ") [ERR]");
+
+        disconnect();
+    }
+
+
+    // if num bytes = 0
+    // => server has diconnected
+    else if (numBytes == 0)
+    {
+        // out
+        error("[SERV] server is disconnected [ERR]");
+
+        disconnect();
         return false;
     }
-    else
-        return true;
 
-    // @TODO encrypt after receive
+    // all fine
+    else
+    {
+        return true;
+    }
 }
 
 // -- SEND PACKET ------------------
@@ -190,6 +251,31 @@ bool Client::send(Packet *packet)
     packet->toBytes(buffer);
     sendBytes(buffer, packet->length);
 }
+
+
+
+// -- SHOW SSL CERTIFICATES -----------------
+void Client::printCertificates(SSL *ssl)
+{
+    X509 *cert;
+    char *line;
+
+    cert = SSL_get_peer_certificate(ssl); /* Get certificates (if available) */
+    if ( cert != NULL )
+    {
+        printf("[CLIE] Server certificates:\n");
+        line = X509_NAME_oneline(X509_get_subject_name(cert), 0, 0);
+        printf("[CLIE] Subject: %s\n", line);
+        free(line);
+        line = X509_NAME_oneline(X509_get_issuer_name(cert), 0, 0);
+        printf("[CLIE] Issuer: %s\n", line);
+        free(line);
+        X509_free(cert);
+    }
+    else
+        printf("[CLIE] No certificates. [ERR] \n");
+}
+
 
 
 
@@ -208,4 +294,6 @@ void Client::onReceive(function<void(Packet *packet)> onReceive)
 // -- DESTROY OBJECT --------------------
 Client::~Client()
 {
+    // close socket
+    close(sock);
 }

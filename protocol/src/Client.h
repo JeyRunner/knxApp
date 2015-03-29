@@ -52,9 +52,9 @@ class Client
         int serverPort;
 
         // init openssl
-        static void init();
+        void init();
 
-        bool connect();
+        bool connectToServer();
         bool disconnect();
         bool connected;
 
@@ -74,6 +74,9 @@ class Client
         // message listeners
         void onError(function<void(string msg)> onError);
 
+        // show openssl certificates
+        void printCertificates(SSL *ssl);
+
 
     private:
         // listener
@@ -82,15 +85,19 @@ class Client
 
         // var
         char        recBuff[20];
-        sockaddr_in clientAddr, serverAddr;
+        sockaddr_in serverAddr;
         hostent    *host;
         int         sock, lenCli;
+
+        // ssl
+        SSL_CTX  *ctx;
+        SSL      *ssl;
 
         // receive thread
         bool startReceiveThread();
         static void* thread_receive(void*connection); // thread function
-        pthread_t    thread_receive_id;                   // thread id
-        void receiveLoop();                                // receive loop function -> run in thread_receive
+        pthread_t    thread_receive_id;               // thread id
+        void receiveLoop();                           // receive loop function -> run in thread_receive
 };
 
 

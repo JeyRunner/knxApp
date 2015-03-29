@@ -15,6 +15,10 @@
 #include <Text.h>
 #include <Box.h>
 #include <Style.h>
+#include "../../protocol/src/PacketFactory.h"
+#include "../../protocol/src/Packet.h"
+#include "../../protocol/src/Client.h"
+
 
 using namespace std;
 
@@ -63,7 +67,25 @@ int main(int argc, char **argv)
     ui->frameRenderer->start();
 
 
-    // @TODO setup homeserver connection
+    // setup home server connection
+    home::Client *client = new home::Client("192.168.1.163", 5049);
+    client->onError([&](string msg)
+    {
+        cout << msg << endl;
+    });
+    client->onReceive([&](home::Packet *packet)
+    {
+        cout << "[CLIE] receive packet '" << packet->type << "'" << endl;
+    });
+
+    // init
+    client->init();
+
+    // connect
+    client->connectToServer();
+
+    // test send
+    client->send(new home::Packet());
 
 
     // not close programm
