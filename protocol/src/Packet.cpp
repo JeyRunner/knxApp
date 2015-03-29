@@ -19,7 +19,8 @@ Packet::Packet()
 {
     // default parameter
     // when sending the packet
-    type = 0x00;
+    type   = 0x00;
+    length = 1;
 }
 
 Packet::Packet(char bytes[]) : Packet()

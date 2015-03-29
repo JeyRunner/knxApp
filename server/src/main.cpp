@@ -8,27 +8,14 @@
 // include
 // net
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <stdio.h>
 #include <unistd.h>
-#include <string.h>
 #include <stdlib.h>
-#include <sys/time.h>
-#include <errno.h>
 #include "knx/TunnelingRequest.h"
-#include "knx/KnxConnection.h"
-#include "knx/DataPacket.h"
+#include "../../protocol/src/Server.h"
 
-#include <fcntl.h>
-#include <errno.h>
-#include <unistd.h>
 #include <syslog.h>
 #include <sys/stat.h>
-#include <string>
-#include <stdlib.h>
+
 using namespace std;
 
 
@@ -50,6 +37,7 @@ pid_t progChild, idChild;
 // ## START DAEMON ####################
 int main(int argc, char** argv)
 {
+    /*
     //Set our Logging Mask and open the Log
     setlogmask(LOG_UPTO(LOG_NOTICE));
     openlog(DAEMON_NAME, LOG_CONS | LOG_NDELAY | LOG_PERROR | LOG_PID, LOG_LOCAL0);
@@ -122,6 +110,25 @@ int main(int argc, char** argv)
         syslog (LOG_NOTICE, "[MAIN] connected to knx router [OK]");
     else
         syslog (LOG_ERR, "[MAIN] connected to knx router [ERR]");
+    */
+
+    // create home server
+    home::Server server(5049);
+    server.onError([&](string msg)
+    {
+        cout << msg << endl;
+        //syslog (LOG_NOTICE, msg.c_str());
+    });
+    server.onReceive([&](home::Packet *packet, home::Host *client)
+    {
+        cout << "[SERV] receive packet '" << packet->type << "'" << endl;
+
+        // resend
+        server.send(packet, client);
+    });
+
+    server.init();
+    server.start();
 
 
     while (true)

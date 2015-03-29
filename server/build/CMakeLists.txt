@@ -11,7 +11,10 @@ file( GLOB srcProtocol ${srcDirProtocol}*.cpp ${srcDirProtocol}*.h)
 
 # include
 include_directories( /usr/local/include )
+include_directories( /usr/local/ssl/include/ )
 include_directories( ${srcDir} )
+
+link_directories( /usr/local/ssl/lib)
 
 
 # c++ 11
@@ -41,4 +44,4 @@ add_executable (knxServer ${srcProtocol} ${srcs})
 
 
 # link libs
-target_link_libraries( knxServer pthread )
+target_link_libraries( knxServer pthread  libssl.a libcrypto.a dl )

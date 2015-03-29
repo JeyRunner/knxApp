@@ -13,6 +13,7 @@ file( GLOB srcProtocol ${srcDirProtocol}*.cpp ${srcDirProtocol}*.h)
 include_directories( /usr/local/include/freetype2)
 include_directories( /usr/local/include )
 include_directories( /usr/local/include/SDL2 )
+include_directories( /usr/local/ssl/include/ )
 
 # ### panui #######################################
 include_directories( /home/joshua/Dokumente/Projekte/panui/ )
@@ -20,6 +21,7 @@ add_definitions    ( -DGLM_FORCE_RADIANS)
 
 # link libs
 link_directories( /opt/vc/lib/ /usr/local/lib /home/joshua/Dokumente/Projekte/panui/build/ubuntu/ubuntu )
+link_directories( /usr/local/ssl/lib)
 
 
 # c++ 11
@@ -49,4 +51,4 @@ add_executable (knxApp ${srcProtocol} ${srcs})
 
 
 # link libs
-target_link_libraries( knxApp panui SDL2 freetype pthread )
+target_link_libraries( knxApp panui SDL2 freetype pthread libssl.a libcrypto.a dl)

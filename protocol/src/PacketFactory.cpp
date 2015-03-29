@@ -28,6 +28,7 @@ Packet* PacketFactory::createPacket(char bytes[])
             break;
 
         default:
-            cout << "[ERR ][packetFactory] unkown packettype '"<< bytes[0] <<"'" << endl;
+            cout << "[PFAC] unkown packettype '"<< bytes[0] <<"' [ERR]" << endl;
+            return new Packet(bytes);
     }
 }

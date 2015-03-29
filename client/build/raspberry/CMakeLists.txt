@@ -30,6 +30,7 @@ include_directories( /opt/vc/include )
 include_directories( /opt/vc/include/interface/vcos/pthreads )
 include_directories( /opt/vc/include/interface/vmcs_host/linux )
 include_directories( ${PANUI_ROOT})
+include_directories( /usr/local/ssl/include/ )
 
 # define #######################################################
 add_definitions (-Dpl_pi)
@@ -37,6 +38,7 @@ add_definitions (-DGLM_FORCE_RADIANS)
 
 # link libs
 link_directories    ( /opt/vc/lib/ /usr/local/lib ${PANUI_ROOT_LIB})
+link_directories	( /usr/local/ssl/lib)
 
 
 # c++ 11
@@ -66,4 +68,4 @@ add_executable (knxApp ${srcProtocol} ${srcs})
 
 
 # link libs
-target_link_libraries( knxApp panui freetype pthread )
+target_link_libraries( knxApp panui freetype pthread libssl.a libcrypto.a dl)

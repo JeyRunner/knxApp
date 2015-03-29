@@ -22,7 +22,7 @@ link_directories ( ${PANUI_LIBFILE_PATH})
 link_directories ( ${ANDROID_TOOLCHAIN}/arm-linux-androideabi/lib/armv7-a)
 
 ## link libs
-set (LINK_LIBS			SDL2 GLESv1_CM GLESv2 log android c stdc++ panui gnustl_shared libfreetype.a )#${PANUI_PATH}/android/lib/libfreetype2-static.a)
+set (LINK_LIBS			SDL2 GLESv1_CM GLESv2 log android c stdc++ panui gnustl_shared libfreetype.a  libssl.a libcrypto.a dl )#${PANUI_PATH}/android/lib/libfreetype2-static.a)
 
 
 # ### android #################################################################################################
@@ -45,6 +45,7 @@ file(GLOB srcSDL ${srcDir}/SDL/*.cpp )
 # lib
 link_directories(${ANDROID_SYSROOT_LIB})
 link_directories(${LIB_FREETYPE_STATIC})
+link_directories(/usr/local/ssl/lib)
 
 # create lib
 add_library (${target} SHARED ${srcProtocol} ${srcs} ${srcSDL})
@@ -62,6 +63,7 @@ include_directories(${ANDROID_TOOLCHAIN_INCLUDE})
 include_directories(${ANDROID_SYSROOT_INCLUDE})
 include_directories(${ANDROID_SYSROOT_INCLUDE}/SDL)
 include_directories(${ANDROID_SDL_PATH})
+include_directories( /usr/local/ssl/include/ )
 
 
 
