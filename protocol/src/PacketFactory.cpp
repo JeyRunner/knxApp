@@ -22,6 +22,7 @@ Packet* PacketFactory::createPacket(char bytes[])
     switch (bytes[0])
     {
         case HOME_PACKET_KNXTUNNEL:
+            return new KnxPacket(bytes);
             break;
 
         case HOME_PACKET_DEVICE:

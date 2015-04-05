@@ -52,6 +52,7 @@ class Server
 
         // var
         bool connected;
+        list<Host *> socksClients;   // client sockets
 
         // init openssl
         void init();
@@ -81,7 +82,6 @@ class Server
         sockaddr_in  serverAddr;
         int          sockServer;
         fd_set       socksAll;       // all sockets (clients and server)
-        list<Host *> socksClients;   // client sockets
         int          sockMax;        // max socket
 
         // listener

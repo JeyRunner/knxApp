@@ -20,6 +20,7 @@
 #include <string>
 #include <stdlib.h>
 #include "Packet.h"
+#include "KnxPacket.h"
 
 
 using namespace std;

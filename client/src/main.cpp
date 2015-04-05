@@ -31,6 +31,7 @@ const int serverPort = 3671;
 Ui *ui;
 Box *root;
 Text *headline;
+Text *out;
 
 
 /*
@@ -48,9 +49,11 @@ int main(int argc, char **argv)
     // ui components
     root     = new Box();
     headline = new Text();
+    out      = new Text();
 
     headline->text("Knx");
     root->addChild(headline);
+    root->addChild(out);
 
     // style
     Style::getRule("*")->textSize->set(50);
@@ -72,10 +75,26 @@ int main(int argc, char **argv)
     client->onError([&](string msg)
     {
         cout << msg << endl;
+        out->text(out->text() + msg + "\n");
     });
     client->onReceive([&](home::Packet *packet)
     {
         cout << "[CLIE] receive packet '" << packet->type << "'" << endl;
+
+        // cast to knx packet
+        home::KnxPacket *clientPacket = ((home::KnxPacket*)packet);
+
+        // if knx packet
+        if (clientPacket)
+        {
+            // get data from home packet
+            int main, middle, sub,
+                    area, groupe, line;
+            clientPacket->getDestinationAddr(main, middle, sub);
+            clientPacket->getSourcAddr(area, groupe, line);
+
+            out->text(out->text() + "[GET ] src: " + to_string(main) + "/" + to_string(middle) + "/" + to_string(sub) + "\n");
+        }
     });
 
     // init
@@ -84,8 +103,6 @@ int main(int argc, char **argv)
     // connect
     client->connectToServer();
 
-    // test send
-    client->send(new home::Packet());
 
 
     // not close programm

@@ -12,9 +12,11 @@
 #include <stdlib.h>
 #include "knx/TunnelingRequest.h"
 #include "../../protocol/src/Server.h"
+#include "../../protocol/src/KnxPacket.h"
 
 #include <syslog.h>
 #include <sys/stat.h>
+#include <SDL2/SDL_main.h>
 
 using namespace std;
 
@@ -23,14 +25,21 @@ using namespace std;
 const string    serverIp   = "192.168.1.164";
 const int       serverPort = 3671;
 
-// knx connection
+// connections
 KnxConnection  *knx;
+home::Server   *server;
 
 // general
 const char DAEMON_NAME[] = "KnxServer";
 
 // progress
 pid_t progChild, idChild;
+
+
+// pre def
+void onKnxReceive(TunnelingRequest *packet);
+void onHomeServerReceive(home::Packet *packet, home::Host *client);
+void onError(string msg);
 
 
 
@@ -91,46 +100,26 @@ int main(int argc, char** argv)
     close(STDERR_FILENO);
 
     syslog(LOG_NOTICE, "[MAIN] started successful");
-
+    */
 
 
     // -- MAIN ---- ---------
     // create knx connection
-    KnxConnection knx(serverIp, serverPort);
+    knx = new KnxConnection(serverIp, serverPort);
+    knx->onReceiveDataPacket(&onKnxReceive);     // on new packet
+    knx->onError(&onError);                      // on error
+    knx->connect();                              // connect
 
-
-    // set error output
-    knx.onError([&](string msg)
-    {
-        syslog (LOG_NOTICE, msg.c_str());
-    });
-
-    // connect
-    if (knx.connect())
-        syslog (LOG_NOTICE, "[MAIN] connected to knx router [OK]");
-    else
-        syslog (LOG_ERR, "[MAIN] connected to knx router [ERR]");
-    */
 
     // create home server
-    home::Server server(5049);
-    server.onError([&](string msg)
-    {
-        cout << msg << endl;
-        //syslog (LOG_NOTICE, msg.c_str());
-    });
-    server.onReceive([&](home::Packet *packet, home::Host *client)
-    {
-        cout << "[SERV] receive packet '" << packet->type << "'" << endl;
-
-        // resend
-        server.send(packet, client);
-    });
-
-    server.init();
-    server.start();
+    server = new home::Server(5049);
+    server->onError(&onError);                   // set on error
+    server->onReceive(&onHomeServerReceive);     // on new packet
+    server->init();                              // start
+    server->start();
 
 
+    // not close
     while (true)
     {
         sleep(10000);
@@ -142,4 +131,63 @@ int main(int argc, char** argv)
 
     // close Log
     closelog();
+}
+
+
+// -- KNX RECEIVE -----------------------
+void onKnxReceive(TunnelingRequest *packet)
+{
+    // get data from Tunneling request
+    int main, middle, sub,
+            area, groupe, line;
+    packet->getDestinationAddr(main, middle, sub);
+    packet->getSourcAddr(area, groupe, line);
+
+
+    // transpher data to home server packet
+    home::KnxPacket *clientPacket = new home::KnxPacket();
+    clientPacket->setDestinationAddr(main, middle, sub);
+    clientPacket->setSourcAddr(area, groupe, line);
+
+
+    // send to all clients
+    for (home::Host *host : server->socksClients)
+    {
+        server->send(clientPacket, host);
+    }
+}
+
+
+// -- HOME RECEIVE ----------------------
+void onHomeServerReceive(home::Packet *packet, home::Host *client)
+{
+    // cast to knx packet
+    home::KnxPacket *clientPacket = ((home::KnxPacket*)packet);
+
+    // if knx packet
+    if (clientPacket)
+    {
+        // get data from home packet
+        int main, middle, sub,
+                area, groupe, line;
+        clientPacket->getDestinationAddr(main, middle, sub);
+        clientPacket->getSourcAddr(area, groupe, line);
+
+
+        // transpher data to home server packet
+        TunnelingRequest *knxPacket = new TunnelingRequest(knx);
+        knxPacket->setDestinationAddr(main, middle, sub);
+        knxPacket->setSourcAddr(area, groupe, line);
+
+        // send to knx bus
+        knxPacket->send();
+    }
+}
+
+
+// -- ON ERROR --------------------------
+void onError(string msg)
+{
+    cout << msg << endl;
+    //syslog (LOG_NOTICE, msg.c_str());
 }
