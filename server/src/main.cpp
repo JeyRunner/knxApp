@@ -40,6 +40,7 @@ pid_t progChild, idChild;
 void onKnxReceive(TunnelingRequest *packet);
 void onHomeServerReceive(home::Packet *packet, home::Host *client);
 void onError(string msg);
+void onDisconnect();
 
 
 
@@ -108,6 +109,7 @@ int main(int argc, char** argv)
     knx = new KnxConnection(serverIp, serverPort);
     knx->onReceiveDataPacket(&onKnxReceive);     // on new packet
     knx->onError(&onError);                      // on error
+    knx->onDisconnect(&onDisconnect);            // on disconnect
     knx->connect();                              // connect
 
 
@@ -190,4 +192,13 @@ void onError(string msg)
 {
     cout << msg << endl;
     //syslog (LOG_NOTICE, msg.c_str());
+}
+
+// -- ON DISCONNECT ---------------------
+void onDisconnect()
+{
+    cout << "[KNX ] disconnected" << endl;
+
+    // reconnect
+    knx->connect();
 }

@@ -62,11 +62,13 @@ class KnxConnection
         
         // message listeners
         void onError(function<void(string msg)> onError);
+        void onDisconnect(function<void ()> onDisconnect);
         
         // var
         string serverIp;
         int    serverPort;
         char   chanelId;
+        sockaddr_in clientAddr, serverAddr;
         
         void a(string a);
         void ab(char buffer[], int len);
@@ -75,11 +77,11 @@ class KnxConnection
     private:
         // on message
         function<void(string msg)> onErrorFunc;
+        function<void()> onDisconnectFunc;
         function<void(TunnelingRequest* packet)> onReceivePackerFunc;
         
         // var
         char        recBuff[20];
-        sockaddr_in clientAddr, serverAddr;
         hostent    *host;
         int         sock, lenCli;
         

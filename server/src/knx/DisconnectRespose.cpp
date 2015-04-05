@@ -15,6 +15,10 @@
 // -- CREATE OBJECT ---------------------
 DisconnectRespose::DisconnectRespose(KnxConnection* connection): KnxPacket::KnxPacket(connection)
 {
+    // default
+    setType(KNX_PACKET_DISCONNECT_RESPONSE);
+    setTotalLength(8);                         // 8 bytes
+
     conHeaderChanelID = &(connection->chanelId);
 }
 

@@ -14,6 +14,7 @@
 #include "TunnelingResponse.h"
 #include "TunnelingRequest.h"
 #include "DisconnectRespose.h"
+#include "DisconnectRequest.h"
 
 
 // -- CREATE OBJECT ---------------------
@@ -73,7 +74,11 @@ KnxPacket* KnxPacket::getPacket(char bytes[], KnxConnection* connection)
         case KNX_PACKET_TUNNELING_RESPONSE:
             cout << "[PACK] make packet type tunneling response '"<< type <<"' [OK]" << endl;
             return new TunnelingResponse(connection, bytes);
-            
+
+        case KNX_PACKET_DISCONNECT_REQUEST:
+            cout << "[PACK] make packet type disconnect request '"<< type <<"' [OK]" << endl;
+            return new DisconnectRequest(connection, bytes);
+
         case KNX_PACKET_DISCONNECT_RESPONSE:
             cout << "[PACK] make packet type disconnect response '"<< type <<"' [OK]" << endl;
             return new DisconnectRespose(connection, bytes);

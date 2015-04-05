@@ -13,6 +13,8 @@
 #include "KnxConnection.h"
 #include "TunnelingRequest.h"
 #include "TunnelingResponse.h"
+#include "DisconnectRequest.h"
+#include "DisconnectRespose.h"
 
 // -- CREATE OBJECT ------------------
 KnxConnection::KnxConnection(string ip, int port) 
@@ -277,7 +279,29 @@ void KnxConnection::receiveLoop()
         case KNX_PACKET_TUNNELING_RESPONSE:
 //            a("[GET ] tunneling response");
             break;
-            
+
+
+        case KNX_PACKET_DISCONNECT_REQUEST:
+        {
+            a("[GET ] disconnect request");
+
+            // send disconnect respose
+            DisconnectRespose *respose = new DisconnectRespose(this);
+            char buffer[respose->getTotalLength()];
+            respose->toBytes(buffer);
+            sendBytes(buffer, respose->getTotalLength());
+
+            // stop receive loop
+            connected = false;
+
+            // close socket
+            close(sock);
+
+            onDisconnectFunc();
+
+            break;
+        }
+
         case KNX_PACKET_DISCONNECT_RESPONSE:
             a("[GET ] disconnect response");
             
@@ -286,6 +310,8 @@ void KnxConnection::receiveLoop()
             
             // close socket
             close(sock);
+
+            onDisconnectFunc();
             
             break;
             
@@ -305,30 +331,12 @@ bool KnxConnection::disconnect()
     
     
     a("\n[NET ] disconnect [...]");
-    char dcreq[16];
-    char recBuff[100];
-    
-    /* header */
-    dcreq[0] = 0x06; /* 06 - Header Length */
-    dcreq[1] = 0x10; /* 10 - KNXnet version (1.0) */
-    dcreq[2] = 0x02; /* 02 - hi-byte Service type descriptor (DISCONNECT_REQUEST) */
-    dcreq[3] = 0x09; /* 09 - lo-byte Service type descriptor (DISCONNECT_REQUEST) */
-    dcreq[4] = 0x00; /* 00 - hi-byte total length */
-    dcreq[5] = 0x10; /* 10 - lo-byte total lengt 16 Bytes */
 
-    /* data (10 Bytes) */
-    dcreq[6] = chanelId & 0xff; /* given channel id */
-    dcreq[7] = 0x00; /* 00 - */
-    dcreq[8] = 0x08; /* 08 - Host Protocol Address Information (HPAI) Lenght */
-    dcreq[9] = 0x01; /* 01 - Host Protocol Code 0x01 -> IPV4_UDP, 0x02 -> IPV6_TCP */
-    dcreq[10] = 0x00; //ntohl(clientAddr.sin_addr.s_addr) >> 24 & 0xff; /* c0 - IP address c0 = 192 */
-    dcreq[11] = 0x00; //ntohl(clientAddr.sin_addr.s_addr) >> 16 & 0xff; /* a8 - IP address a8 = 168 */
-    dcreq[12] = 0x00; //ntohl(clientAddr.sin_addr.s_addr) >> 8 & 0xff; /* 0a - IP address 0a = 10 */
-    dcreq[13] = 0x00; //ntohl(clientAddr.sin_addr.s_addr) & 0xff; /* b3 - IP address 9F = 179 */
-    dcreq[14] = 0x00; //(ntohs(clientAddr.sin_port) >> 8) & 0xff; /* 0e - hi-byte local port number for CONNECTION, CONNECTIONSTAT and DISCONNECT requests */
-    dcreq[15] = 0x00; //ntohs(clientAddr.sin_port) & 0xff; /* 57 - lo-byte local port number for CONNECTION, CONNECTIONSTAT and DISCONNECT requests */
-
-    sendBytes(dcreq, 16);
+    // send disconnect respose
+    DisconnectRespose *respose = new DisconnectRespose(this);
+    char buffer[respose->getTotalLength()];
+    respose->toBytes(buffer);
+    sendBytes(buffer, respose->getTotalLength());
     
     return true;
 }
@@ -398,6 +406,11 @@ void KnxConnection::onError(function<void(string msg)> onError)
     this->onErrorFunc = onError;
 }
 
+// -- SET ON DISCONNECT -----------------
+void KnxConnection::onDisconnect(function<void()> onDisconnect)
+{
+    this->onDisconnectFunc = onDisconnect;
+}
 
 
 // -- OUT --------------------------------------------

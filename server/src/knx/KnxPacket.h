@@ -63,6 +63,7 @@ class KnxPacket
 const short KNX_PACKET                      = 0x0000,
             KNX_PACKET_TUNNELING_REQUEST    = 0x0420,
             KNX_PACKET_TUNNELING_RESPONSE   = 0x0421,
+            KNX_PACKET_DISCONNECT_REQUEST   = 0x0209,
             KNX_PACKET_DISCONNECT_RESPONSE  = 0x020A;
 
 
