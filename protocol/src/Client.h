@@ -73,6 +73,7 @@ class Client
 
         // message listeners
         void onError(function<void(string msg)> onError);
+        void onDisconnect(function<void ()> onDisconnect);
 
         // show openssl certificates
         void printCertificates(SSL *ssl);
@@ -82,6 +83,7 @@ class Client
         // listener
         function<void(string msg)> error;
         function<void(home::Packet* packet)> onReceiveFunc;
+        function<void()> onDisconnectFunc;
 
         // var
         char        recBuff[20];

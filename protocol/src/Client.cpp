@@ -52,7 +52,7 @@ bool Client::connectToServer()
     host = gethostbyname(serverIp.c_str());
     if (host == NULL)
     {
-        error("[CLIE] ip '" + serverIp + "' exists [ERR]");
+        error("server ip '" + serverIp + "' dose not exists");
         return false;
     }
     else
@@ -69,7 +69,7 @@ bool Client::connectToServer()
     sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0)
     {
-        error("[CLIE] open socket [ERR]");
+        error("open socket to server");
         perror("[CLIE] open socket [ERR]");
         return false;
     }
@@ -79,7 +79,8 @@ bool Client::connectToServer()
     int r = connect(sock, (struct sockaddr*)&serverAddr, sizeof(serverAddr)); //bind(sockServer, (struct sockaddr *) &clientAddr, sizeof(clientAddr));
     if (r < 0)
     {
-        error("[CLIE] connect socket to server [ERR]");
+        error("can not connect socket to server");
+        onDisconnectFunc();
         perror("[CLIE] connect socket to server [ERR]");
         return false;
     }
@@ -96,9 +97,9 @@ bool Client::connectToServer()
     // ssl connect
     if ( SSL_connect(ssl) < 0)
     {
-        error("[CLIE] ssl connect [ERR]");
+        error("can not create ssl connection");
         // ERR_print_errors(stderr);
-        connected = false;
+        disconnect();
         return      false;
     }
     else
@@ -127,6 +128,9 @@ bool Client::disconnect()
 
     // close socket
     close(sock);
+
+    // event
+    onDisconnectFunc();
 }
 
 
@@ -147,7 +151,7 @@ bool Client::startReceiveThread()
             break;
 
         default:
-            error("[CLIE] create receive thread [ERR] \n");
+            error("can not create receive thread");
     }
 }
 
@@ -195,7 +199,7 @@ bool Client::sendBytes(char buffer[], int len)
         int err = SSL_get_error(ssl, r);
         ERR_error_string(ERR_get_error(), errBuff);
 
-        error("[CLIE] ssl write '" + string(errBuff) + "' (" + to_string(err) + ") [ERR]");
+        error("can not write to server via ssl'" + string(errBuff) + "' (" + to_string(err) + ")");
         disconnect();
     }
 
@@ -220,7 +224,7 @@ bool Client::receiveBytes(char buffer[], int len)
         int err = SSL_get_error(ssl, numBytes);
         ERR_error_string(ERR_get_error(), errBuff);
 
-        error("[CLIE] ssl read '" + string(errBuff) + "' (" + to_string(err) + ") [ERR]");
+        error("can not read from server via ssl '" + string(errBuff) + "' (" + to_string(err) + ")");
 
         disconnect();
     }
@@ -231,7 +235,7 @@ bool Client::receiveBytes(char buffer[], int len)
     else if (numBytes == 0)
     {
         // out
-        error("[SERV] server is disconnected [ERR]");
+        error("server is disconnected");
 
         disconnect();
         return false;
@@ -283,6 +287,12 @@ void Client::printCertificates(SSL *ssl)
 void Client::onError(function<void(string msg)> onError)
 {
     this->error = onError;
+}
+
+// -- SET ON DISCONNECT -----------------
+void Client::onDisconnect(function<void()> onDisconnect)
+{
+    this->onDisconnectFunc = onDisconnect;
 }
 
 // -- SET ON RECEIVE ---------------
