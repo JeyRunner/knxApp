@@ -18,6 +18,13 @@ Alert::Alert(Box *rootView)
     this->rootView  = rootView;
     this->visible   = false;
 
+    // reference text size
+    #ifdef pl_andr
+    refTextSize = 50;
+    #else
+    refTextSize = 30;
+    #endif
+
     init();
 }
 
@@ -32,7 +39,7 @@ void Alert::init()
     StyleRule *styEntr = new StyleRule("#alertEntry");
     StyleRule *styButt = new StyleRule("#alertButton");
 
-    styAll->textSize->set(25);
+    styAll->textSize->set(refTextSize);
     styAll->textColor->set("000000DD");
     styAll->width->setPercent(100);
 
@@ -44,13 +51,13 @@ void Alert::init()
 
     styHead->backgroundColor->set("33B5E5");  // blue
     styHead->textColor->set("FFFFFFFF");      // white
-    styHead->textSize->set(30);
+    styHead->textSize->set(refTextSize*1.3);
     styHead->paddingLeft->set(5);
     styHead->paddingRight->set(5);
     styHead->paddingTop->set(10);
     styHead->paddingBottom->set(10);
 
-    styButt->textSize->set(27);
+    styButt->textSize->set(refTextSize*1.1);
     styButt->top->set(15);
     styButt->paddingLeft->set(5);
     styButt->paddingRight->set(5);

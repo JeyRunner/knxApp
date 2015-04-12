@@ -19,6 +19,7 @@
 #include "../../protocol/src/PacketFactory.h"
 #include "../../protocol/src/Packet.h"
 #include "../../protocol/src/Client.h"
+#include "../../protocol/src/to_string.cpp"
 
 
 using namespace std;
@@ -70,6 +71,7 @@ int main(int argc, char **argv)
     // in android other font path
     #ifdef pl_andr
     Style::getRule("*")->textFamily->set("FreeSans.ttf");
+    Style::getRule("*")->textSize->set(50);
     #endif
 
     // open screen

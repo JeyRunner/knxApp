@@ -11,6 +11,7 @@
  */
 
 #include "Client.h"
+#include "to_string.cpp"
 
 using namespace home;
 
