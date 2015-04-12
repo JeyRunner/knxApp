@@ -150,7 +150,7 @@ void onKnxReceive(TunnelingRequest *packet)
     home::KnxPacket *clientPacket = new home::KnxPacket();
     clientPacket->setDestinationAddr(main, middle, sub);
     clientPacket->setSourcAddr(area, groupe, line);
-
+    clientPacket->value = packet->value;    // transpher data value
 
     // send to all clients
     for (home::Host *host : server->socksClients)
@@ -180,6 +180,7 @@ void onHomeServerReceive(home::Packet *packet, home::Host *client)
         TunnelingRequest *knxPacket = new TunnelingRequest(knx);
         knxPacket->setDestinationAddr(main, middle, sub);
         knxPacket->setSourcAddr(area, groupe, line);
+        knxPacket->value = clientPacket->value;     // transpher data value
 
         // send to knx bus
         knxPacket->send();

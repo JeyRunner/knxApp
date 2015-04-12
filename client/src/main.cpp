@@ -25,8 +25,8 @@ using namespace std;
 
 
 // var
-const string serverIp = "192.168.1.164";
-const int serverPort = 3671;
+const string    SERVER_IP   = "192.168.1.170";
+const int       SERVER_PORT = 5049;
 home::Client *client;
 
 // ui
@@ -79,7 +79,7 @@ int main(int argc, char **argv)
 
 
     // setup home server connection
-    client = new home::Client("192.168.1.163", 5049);
+    client = new home::Client(SERVER_IP, SERVER_PORT);
     client->onError(&onError);
     client->onReceive(&onReceive);
     client->onDisconnect(&onDisconnect);
@@ -117,7 +117,14 @@ void onReceive(home::Packet *packet)
         clientPacket->getDestinationAddr(main, middle, sub);
         clientPacket->getSourcAddr(area, groupe, line);
 
-        out->text(out->text() + "[GET ] src: " + to_string(main) + "/" + to_string(middle) + "/" + to_string(sub) + "\n");
+        // value
+        string value = "UNKNOWN VALUE";
+        if (((SwitchValue*)clientPacket->value))
+        {
+            value = ((SwitchValue*)clientPacket->value)->get() ? "on" : "off";
+        }
+
+        out->text(out->text() + "[GET ] src: " + to_string(main) + "/" + to_string(middle) + "/" + to_string(sub) + " (" + value + ")\n");
     }
 }
 

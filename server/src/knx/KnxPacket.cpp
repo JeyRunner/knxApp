@@ -69,7 +69,7 @@ KnxPacket* KnxPacket::getPacket(char bytes[], KnxConnection* connection)
             
         case KNX_PACKET_TUNNELING_REQUEST:
             cout << "[PACK] make packet type tunneling request '"<< type <<"' [OK]" << endl;
-            return TunnelingRequest::getTunnelingRequest(bytes, connection);
+            return new TunnelingRequest(connection, bytes);
             
         case KNX_PACKET_TUNNELING_RESPONSE:
             cout << "[PACK] make packet type tunneling response '"<< type <<"' [OK]" << endl;

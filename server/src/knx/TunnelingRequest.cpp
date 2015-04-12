@@ -11,13 +11,7 @@
  */
 
 
-#include <string>
-
 #include "TunnelingRequest.h"
-#include "KnxConnection.h"
-#include "KnxPacket.h"
-#include "KnxPacket.h"
-#include "DataPacket.h"
 
 
 // static
@@ -30,6 +24,9 @@ TunnelingRequest::TunnelingRequest(KnxConnection* connection): KnxPacket::KnxPac
     
     // default parameter 
     reset();
+
+    // create default switch value
+    value = new SwitchValue();
 }
 
 TunnelingRequest::TunnelingRequest(KnxConnection* connection, char bytes[]): TunnelingRequest::TunnelingRequest(connection)
@@ -46,19 +43,22 @@ void TunnelingRequest::fromBytes(char bytes[])
     KnxPacket::fromBytes(bytes);
     
     // Connection Header (4 Bytes)
-    conHeaderLenght = bytes[6];
-    *conHeaderChanelID = bytes[7];
-    conHeaderCounter = bytes[8];
+    conHeaderLenght     = bytes[6];
+    *conHeaderChanelID  = bytes[7];
+    conHeaderCounter    = bytes[8];
     
     // cEMI-Frame (11 Bytes)
-    cemiType         = bytes[10];
-    cemiInfoLenght  = bytes[11];
-    cemiControl      = bytes[12];
-    cemiDRL          = bytes[13];
-    cemiAddrSrcHi   = bytes[14];
-    cemiAddrSrcLo   = bytes[15];
-    cemiAddrDestHi  = bytes[16];
-    cemiAddrDestLo  = bytes[17];
+    cemiType            = bytes[10];
+    cemiInfoLenght      = bytes[11];
+    cemiControl         = bytes[12];
+    cemiDRL             = bytes[13];
+    cemiAddrSrcHi       = bytes[14];
+    cemiAddrSrcLo       = bytes[15];
+    cemiAddrDestHi      = bytes[16];
+    cemiAddrDestLo      = bytes[17];
+
+    // data
+    value->fromBytes(bytes, 20 /* data starts with byte nr. 20 */);
 }
 
 
@@ -88,9 +88,9 @@ void TunnelingRequest::toBytes(char bytes[])
     bytes[17] = cemiAddrDestLo  & 0xff;
     bytes[18] = 0x01; // 01 data byte following 
     bytes[19] = 0x00; // tpdu
-    // bytes[20] = cemiData[0];
-    // @TODO use data longer then on byte
-    
+
+    // data
+    value->toBytes(bytes, 20 /* data starts with byte nr. 20 */);
 }
 
 
@@ -157,22 +157,4 @@ void TunnelingRequest::send()
 {
     KnxPacket::send();
     counter++;
-}
-
-
-// -- GET PACKET BY TYPE ----------------
-TunnelingRequest* TunnelingRequest::getTunnelingRequest(char bytes[], KnxConnection* connection)
-{
-    short type = (short)( bytes[3] | (bytes[2] << 8) );
-    
-    return new SwitchPacket(connection, bytes);
-    // which type
-//    switch (0)
-//    {
-//        case 0:
-//            return new SwitchPacket(connection, bytes);
-//            
-//        default:
-//            cout << "[PACK] unknown packet type '"<< type <<"' [ERR]" << endl;
-//    }
 }

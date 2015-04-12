@@ -16,6 +16,7 @@
 
 #include "KnxPacket.h"
 #include "KnxConnection.h"
+#include "../../../protocol/src/KnxValue.h"
 //#include "out.hpp"
 
 
@@ -42,6 +43,9 @@ class TunnelingRequest : public KnxPacket
         
         // tunneling request sequence counter
         static int counter;
+
+        // knx data value
+        KnxValue *value;
         
         
         // set variables by bytes
@@ -49,10 +53,7 @@ class TunnelingRequest : public KnxPacket
         
         // get bytes
         virtual void toBytes(char bytes[]);
-        
-        // get fitting tunneling request
-        static TunnelingRequest* getTunnelingRequest(char bytes[], KnxConnection *connection);
-        
+
         /* reset packet
          * use if want to send received packed again */
         void reset();
@@ -67,10 +68,6 @@ class TunnelingRequest : public KnxPacket
         // set knx destination address
         virtual void setDestinationAddr(int main, int middle, int sub);
         void getDestinationAddr(int &main, int &middle, int &sub);
-        
-//        // set data
-//        void setData(char data[], int len);
-//        void getData(char data[], int len);
 };
 
 #endif	/* TUNNELINGREQUEST_H */

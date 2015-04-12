@@ -1,6 +1,5 @@
 # Protocol
 Protocol to communicate from client with server.
-<hr>
 <br>
 
 ## Protocol Structure

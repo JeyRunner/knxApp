@@ -18,7 +18,10 @@ KnxPacket::KnxPacket() : Packet()
 {
     // set fields
     type    = HOME_PACKET_KNXTUNNEL;
-    length  = 5;
+    length  = 7;                        // data 2 bytes long
+
+    // create default switch value
+    value = new SwitchValue();
 }
 
 KnxPacket::KnxPacket(char bytes[]) : KnxPacket::KnxPacket()
@@ -36,6 +39,9 @@ void KnxPacket::fromBytes(char bytes[])
     addrSrcLo   = bytes[2];
     addrDestHi  = bytes[3];
     addrDestLo  = bytes[4];
+
+    // data
+    value->fromBytes(bytes, OFFSET_DATA);
 }
 
 
@@ -48,6 +54,9 @@ void KnxPacket::toBytes(char bytes[])
     bytes[2] = addrSrcLo   & 0xff;
     bytes[3] = addrDestHi  & 0xff;
     bytes[4] = addrDestLo  & 0xff;
+
+    // data
+    value->toBytes(bytes, OFFSET_DATA);
 }
 
 

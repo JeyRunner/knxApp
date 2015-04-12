@@ -10,7 +10,6 @@
  */
 
 #include "Alert.h"
-#include "../../../../android/android-toolchain/include/c++/4.8/iostream"
 
 
 // -- CREATE OBJECT ----------------

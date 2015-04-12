@@ -18,6 +18,7 @@
 #include <string>
 #include <stdlib.h>
 #include "Packet.h"
+#include "KnxValue.h"
 
 using namespace std;
 namespace home
@@ -39,6 +40,9 @@ class KnxPacket : public home::Packet
              addrDestHi,
              addrDestLo;
 
+        // knx data value
+        KnxValue *value;
+
         // set variables by bytes
         virtual void fromBytes(char bytes[]);
 
@@ -52,6 +56,10 @@ class KnxPacket : public home::Packet
         // set knx destination address
         virtual void setDestinationAddr(int main, int middle, int sub);
         void getDestinationAddr(int &main, int &middle, int &sub);
+
+    private:
+        // start of knx data bytes
+        static const int OFFSET_DATA = 5;
 };
 
 
