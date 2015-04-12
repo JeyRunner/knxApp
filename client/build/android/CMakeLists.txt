@@ -17,12 +17,12 @@ set (ANDROID_NDK_CPU		armeabi-v7a)
 # ### panui #######################################
 set (PANUI_PATH 		/home/joshua/Dokumente/Projekte/panui )
 set (PANUI_INCLUDE 		${PANUI_PATH}/include )
-set (PANUI_LIBFILE_PATH		${PANUI_PATH}/android/${ANDROID_NDK_CPU} )
+set (PANUI_LIBFILE_PATH		${PANUI_PATH}/build/android/${ANDROID_NDK_CPU} )
 link_directories ( ${PANUI_LIBFILE_PATH})
 link_directories ( ${ANDROID_TOOLCHAIN}/arm-linux-androideabi/lib/armv7-a)
 
 ## link libs
-set (LINK_LIBS			SDL2 GLESv1_CM GLESv2 log android c stdc++ panui gnustl_shared libfreetype.a  libssl.a libcrypto.a dl )#${PANUI_PATH}/android/lib/libfreetype2-static.a)
+set (LINK_LIBS			SDL2 GLESv1_CM GLESv2 log android c stdc++ panuiAndroid gnustl_shared libfreetype.a  ssl crypto dl )#${PANUI_PATH}/android/lib/libfreetype2-static.a)
 
 
 # ### android #################################################################################################
@@ -81,6 +81,8 @@ file(COPY ${ANDROID_SYSROOT_LIB}/libEGL.so 		DESTINATION ${ANDROID_SO_OUTDIR})
 file(COPY ${ANDROID_SYSROOT_LIB}/libSDL2.so 	DESTINATION ${ANDROID_SO_OUTDIR})
 file(COPY ${ANDROID_SYSROOT_LIB}/libstdc++.so 	DESTINATION ${ANDROID_SO_OUTDIR})
 file(COPY ${ANDROID_SYSROOT_LIB}/libc.so 		DESTINATION ${ANDROID_SO_OUTDIR})
+file(COPY ${ANDROID_SYSROOT_LIB}/libssl.so 		DESTINATION ${ANDROID_SO_OUTDIR})
+file(COPY ${ANDROID_SYSROOT_LIB}/libcrypto.so 	DESTINATION ${ANDROID_SO_OUTDIR})
 
 
 
@@ -90,8 +92,8 @@ add_definitions    (-Dpl_andr)
 include_directories( 	${PANUI_PATH} )
 include_directories( 	${PANUI_INCLUDE} )
 include_directories( 	${ANDROID_SYSROOT_INCLUDE}/freetype2)
-file(COPY 	     		${PANUI_LIBFILE_PATH}/libpanui.so 			DESTINATION ${ANDROID_SO_OUTDIR})
-file(COPY 	     		${LIB_FREETYPE_STATIC}/libfreetype.a 		DESTINATION ${ANDROID_SO_OUTDIR})
+file(COPY 	     		${PANUI_LIBFILE_PATH}/libpanuiAndroid.so	DESTINATION ${ANDROID_SO_OUTDIR})
+file(COPY 	     		${PANUI_LIBFILE_PATH}/libfreetype.a 		DESTINATION ${ANDROID_SO_OUTDIR})
 file(COPY 	     		${PANUI_LIBFILE_PATH}/libgnustl_shared.so 	DESTINATION ${ANDROID_SO_OUTDIR})
 link_directories( 		${PANUI_LIBFILE_PATH})
 add_definitions (   	-DGLM_FORCE_RADIANS)

@@ -48,6 +48,8 @@ class Alert
         Text *btOk;
         bool visible;
 
+        float refTextSize;
+
         // init
         void init();
 };

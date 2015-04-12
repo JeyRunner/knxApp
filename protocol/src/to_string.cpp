@@ -1,11 +1,8 @@
-/* 
- * File:   out.cpp
- * Author: joshua
- * 
- * Created on 27. Februar 2015, 17:16
- */
+// for android to_string support
+#ifdef pl_andr
 
-//#include "out.h"
+#include <string>
+#include <sstream>
 
 template <typename T>
 std::string to_string(T value)
@@ -14,3 +11,5 @@ std::string to_string(T value)
     os << value ;
     return os.str() ;
 }
+
+#endif
