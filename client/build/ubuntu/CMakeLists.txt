@@ -4,9 +4,10 @@
 set (CMAKE_CURRENT_SOURCE_DIR 	${CMAKE_CURRENT_SOURCE_DIR}/../../)
 set (srcDir 					${CMAKE_CURRENT_SOURCE_DIR}src/)
 set (srcDirKnx 					${srcDir}knx/)
+set (srcDirUi					${srcDir}ui/)
 set (srcDirProtocol				${CMAKE_CURRENT_SOURCE_DIR}../protocol/src/)
 
-file( GLOB srcs ${srcDir}*.cpp ${srcDir}*.h   ${srcDirKnx}*.cpp ${srcDirKnx}*.h )
+file( GLOB srcs ${srcDir}*.cpp ${srcDir}*.h   ${srcDirKnx}*.cpp ${srcDirKnx}*.h   ${srcDirUi}*.cpp ${srcDirUi}*.h)
 file( GLOB srcProtocol ${srcDirProtocol}*.cpp ${srcDirProtocol}*.h)
 
 # include
@@ -16,11 +17,11 @@ include_directories( /usr/local/include/SDL2 )
 include_directories( /usr/local/ssl/include/ )
 
 # ### panui #######################################
-include_directories( /home/joshua/Dokumente/Projekte/panui/ )
+include_directories( /media/joshua/Daten/Develop/Projekte/panui/src )
 add_definitions    ( -DGLM_FORCE_RADIANS)
 
 # link libs
-link_directories( /opt/vc/lib/ /usr/local/lib /home/joshua/Dokumente/Projekte/panui/build/ubuntu/ubuntu )
+link_directories( /opt/vc/lib/ /usr/local/lib /media/joshua/Daten/Develop/Projekte/panui/build/ubuntu/ubuntu )
 link_directories( /usr/local/ssl/lib)
 
 
@@ -51,4 +52,4 @@ add_executable (knxApp ${srcProtocol} ${srcs})
 
 
 # link libs
-target_link_libraries( knxApp panui SDL2 freetype pthread libssl.a libcrypto.a dl)
+target_link_libraries( knxApp panui SDL2 freetype pthread libssl.a libcrypto.a dl sqlite3)

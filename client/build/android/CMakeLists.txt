@@ -6,17 +6,18 @@ set (target main)
 # source files
 set (CMAKE_CURRENT_SOURCE_DIR 	${CMAKE_CURRENT_SOURCE_DIR}/../../)
 set (srcDir 					${CMAKE_CURRENT_SOURCE_DIR}src/)
+set (srcDirUi					${srcDir}ui/)
 set (srcDirProtocol				${CMAKE_CURRENT_SOURCE_DIR}../protocol/src/)
 
-file( GLOB srcs ${srcDir}*.cpp ${srcDir}*.h   ${srcDir}knx/*.cpp ${srcDir}knx/*.h  ${srcDir}knx/*.hpp  ${srcDir}SDL/*.cpp)
+file( GLOB srcs ${srcDir}*.cpp ${srcDir}*.h   ${srcDir}knx/*.cpp ${srcDir}knx/*.h  ${srcDir}knx/*.hpp  ${srcDir}SDL/*.cpp   ${srcDirUi}*.cpp ${srcDirUi}*.h )
 file( GLOB srcProtocol ${srcDirProtocol}*.cpp ${srcDirProtocol}*.h)
 
 # var
 set (ANDROID_NDK_CPU		armeabi-v7a)
 
 # ### panui #######################################
-set (PANUI_PATH 		/home/joshua/Dokumente/Projekte/panui )
-set (PANUI_INCLUDE 		${PANUI_PATH}/include )
+set (PANUI_PATH 		/media/joshua/Daten/Develop/Projekte/panui/ )
+set (PANUI_INCLUDE 		${PANUI_PATH}/src )
 set (PANUI_LIBFILE_PATH		${PANUI_PATH}/build/android/${ANDROID_NDK_CPU} )
 link_directories ( ${PANUI_LIBFILE_PATH})
 link_directories ( ${ANDROID_TOOLCHAIN}/arm-linux-androideabi/lib/armv7-a)
@@ -90,6 +91,7 @@ file(COPY ${ANDROID_SYSROOT_LIB}/libcrypto.so 	DESTINATION ${ANDROID_SO_OUTDIR})
 # ### panui ###################################################################################################
 add_definitions    (-Dpl_andr)
 include_directories( 	${PANUI_PATH} )
+include_directories( 	${PANUI_PATH}/include )
 include_directories( 	${PANUI_INCLUDE} )
 include_directories( 	${ANDROID_SYSROOT_INCLUDE}/freetype2)
 file(COPY 	     		${PANUI_LIBFILE_PATH}/libpanuiAndroid.so	DESTINATION ${ANDROID_SO_OUTDIR})

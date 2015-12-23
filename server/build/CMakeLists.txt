@@ -4,9 +4,10 @@
 set (CMAKE_CURRENT_SOURCE_DIR 	../ )
 set (srcDir 					${CMAKE_CURRENT_SOURCE_DIR}src/)
 set (srcDirKnx 					${srcDir}knx/)
+set (srcDirSave					${srcDir}save/)
 set (srcDirProtocol				${CMAKE_CURRENT_SOURCE_DIR}../protocol/src/)
 
-file( GLOB srcs ${srcDir}*.cpp ${srcDir}*.h   ${srcDirKnx}*.cpp ${srcDirKnx}*.h )
+file( GLOB srcs ${srcDir}*.cpp ${srcDir}*.h   ${srcDirKnx}*.cpp ${srcDirKnx}*.h   ${srcDirSave}*.cpp ${srcDirSave}*.h )
 file( GLOB srcProtocol ${srcDirProtocol}*.cpp ${srcDirProtocol}*.h)
 
 # include
@@ -44,4 +45,4 @@ add_executable (knxServer ${srcProtocol} ${srcs})
 
 
 # link libs
-target_link_libraries( knxServer pthread  libssl.a libcrypto.a dl )
+target_link_libraries( knxServer pthread  libssl.a libcrypto.a dl sqlite3)
