@@ -25,38 +25,37 @@
 #include <Box.h>
 #include <Text.h>
 #include "../Save.h"
-#include "../SqlElement.h"
+#include <SqlEntry.h>
 
 using namespace std;
 
 
 /* Container class
  */
-class Container : public SqlElement, public Box
+class Container : public Box, public SqlEntry::OnChangeField
 {
     public:
-        string name;
+        Box         *boxContend;
+        Container   *parent;
+        SqlEntry    *sqlEntry;
 
         Container();
-        Box   *boxContend;
+        void bindToSqlEntry(SqlEntry *entry);
 
+        /*
         virtual void updateAll();       // after change in sql
         void setName(string text);      // set name
         void updateName(string text);   // after change in sql
-        void addContend(SqlElement *view);    // add container/deviceValue
-        void removeContend(SqlElement *view); // remove container/deviceValue
+         */
+        void updateParent();
 
-        virtual int*    getFieldInt(int key);      // get sql field by key
-        virtual string* getFieldString(int key);   // get sql field by key
-        virtual bool*   getFieldBool(int key);     // get sql field by key
-        virtual string  getField_Name(int key);    // get sql field name by int key
-        virtual int     getField_Key(string name); // get int key by field name
+        void addContend(Container *view);    // add container/deviceValue
+        void removeContend(Container *view); // remove container/deviceValue
 
+        virtual void onChangeField(SqlEntry::Field *field);
+    Text  *txtName;
     private:
-        Text  *txtName;
-};
 
-// const
-static const char SQL_FIELD_NAME      = 6;
+};
 
 #endif /* KNX_CONTAINER_H */

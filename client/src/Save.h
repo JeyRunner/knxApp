@@ -28,9 +28,11 @@
 #endif
 
 #include <list>
+#include <functional>
+#include <vector>
 #include <Log.h>
 #include "ui/Container.h"
-#include "SqlElement.h"
+#include <SqlEntry.h>
 class Container;
 
 using namespace std;
@@ -41,16 +43,32 @@ using namespace std;
 class Save
 {
     public:
-        static list<SqlElement*> sqlElements;
-        static Container*        containerRoot;
+        static list<SqlEntry*> sqlEntrys;
+        static Container*      containerRoot;
+        static list<Container*>containers;
 
         static void init();                 // init local database
         static void close();                // close local database
         static void processConfigPacket();  // call after receive new config packed
 
+        static SqlEntry* getSqlEntry(string id);
+
+    /*
         static void dbAddNewElement(SqlElement *element); // add NEW element to database
         static void dbUpdateElement(SqlElement *element); // update element in database
         static void dbRemoveElement(SqlElement *element); // remove element form database
+    */
+
+        struct OnNewSqlEntryDo
+        {
+            OnNewSqlEntryDo(string table, function<void (SqlEntry *entry)> func)
+            { tableName = table; functionDo = func; }
+            string tableName;
+            function<void (SqlEntry *entry)> functionDo;
+        };
+        static vector<OnNewSqlEntryDo*> onNewSqlEntryDo;
+        static void onNewSqlEntry(string tableName, SqlEntry *entry);
+
 
     private:
         static Log log;

@@ -12,8 +12,8 @@
 #include <stdlib.h>
 #include "knx/TunnelingRequest.h"
 #include "save/Save.h"
-#include "../../protocol/src/Server.h"
-#include "../../protocol/src/KnxPacket.h"
+#include <Server.h>
+#include <KnxPacket.h>
 
 #include <syslog.h>
 #include <sys/stat.h>

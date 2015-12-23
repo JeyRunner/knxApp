@@ -16,9 +16,10 @@
 
 // static
 sqlite3*          Save::database;
-list<SqlElement*> Save::sqlElements;
+list<SqlEntry*>   Save::sqlEntrys;
 Container*        Save::containerRoot;
-int               SqlElement::tablesAmount   = 2;
+list<Container*>  Save::containers;
+vector<Save::OnNewSqlEntryDo*> Save::onNewSqlEntryDo;
 Log               Save::log;
 
 
@@ -26,6 +27,26 @@ Log               Save::log;
 void Save::init()
 {
     log.setLogName("SAVE");
+
+
+    // what to do when get new sqlElement
+    onNewSqlEntryDo.push_back(new Save::OnNewSqlEntryDo("container",
+                                                    [&](SqlEntry *entry) {
+                                                        Container *container = new Container();
+                                                        container->bindToSqlEntry(entry);
+                                                    }));
+
+    // how to generate id for entry from table
+    SqlEntry::generateIdForTableList.push_back(new SqlEntry::GenerateIdForTable("container",
+                                                                                [&] (SqlEntry *entry) {
+                                                                                    return (entry->getField("id")->getValue()) + (entry->getField("localId")->getValue());
+                                                                                }));
+    SqlEntry::generateIdForTableList.push_back(new SqlEntry::GenerateIdForTable("containerValues",
+                                                                                [&] (SqlEntry *entry) {
+                                                                                    return (entry->getField("id")->getValue()) + (entry->getField("localId")->getValue());
+                                                                                }));
+
+
 
     // open database
     #ifdef pl_andr
@@ -107,87 +128,141 @@ void Save::init()
 
     // load
     dbLoadElements();
+
+    // find parents for container
+    for (auto container : containers)
+    {
+        container->updateParent();
+        //log.debug(container->sqlEntry->tableName);
+        /*
+        if (container->sqlEntry == NULL)
+        {
+            log.debug("container sqlEntry is NULL");
+        }
+        else
+        {
+            log.debug("container sqlEntry is ok  :" + container->sqlEntry->getField("name")->getValue());
+        }*/
+    }
+}
+
+
+// -- GET ACTION BY TABEL NAME ----------
+void Save::onNewSqlEntry(string tableName, SqlEntry *entry)
+{
+    for (auto endo : onNewSqlEntryDo)
+    {
+        if (endo->tableName == tableName)
+            endo->functionDo(entry);
+    }
 }
 
 
 // -- LOAD ELEMENT FROM DB --------------
 void Save::dbLoadElements()
 {
+    sqlite3_stmt *stmtListTables;
+
     // for each table
-    for (int tableKey = 0; tableKey < SqlElement::tablesAmount; ++tableKey)
+    string sqlListTables = "SELECT name FROM sqlite_master WHERE type='table'";
+    bool ok = sqlite3_prepare_v2(database, sqlListTables.c_str(), sqlListTables.size(), &stmtListTables, 0) == SQLITE_OK;
+    log.out("", !ok, sqlite3_errmsg(database));
+    int cols = sqlite3_column_count(stmtListTables);
+
+    while (sqlite3_step(stmtListTables) == SQLITE_ROW)
     {
-        sqlite3_stmt *stmt;
-        string sql = "SELECT * FROM " + SqlElement::getTableName(tableKey);
+        string col_name = "";
+        string col_value = "";
 
-        bool ok = sqlite3_prepare_v2(database, sql.c_str(), sql.size(), &stmt, 0) == SQLITE_OK;
-        log.out("load " + SqlElement::getTableName(tableKey), !ok,
-            sqlite3_errmsg(database));
-
-
-        int cols = sqlite3_column_count(stmt);
-        string col_name;
-        string col_value;
-
-        while (sqlite3_step(stmt) == SQLITE_ROW)
+        for (int i = 0; i < cols; i++)
         {
-            SqlElement *newSqlElement = SqlElement::createSqlElement(tableKey);
+            if (sqlite3_column_name(stmtListTables, i))
+                col_name = const_cast<const char *>(sqlite3_column_name(stmtListTables, i));
 
-            string out;
-            for (int i = 0; i < cols; i++)
+            if (sqlite3_column_text(stmtListTables, i))
+                col_value = reinterpret_cast<const char *>(sqlite3_column_text(stmtListTables, i));
+
+            if (col_name != "name")
+                break;
+
+            string tableName = col_value;
+            if (tableName == "sqlite_sequence")
+                break;
+
+
+            // get entrys from table
+            sqlite3_stmt *stmt;
+            string sql = "SELECT * FROM " + tableName;
+
+            bool ok = sqlite3_prepare_v2(database, sql.c_str(), sql.size(), &stmt, 0) == SQLITE_OK;
+            log.out("load " + tableName, !ok,
+                    sqlite3_errmsg(database));
+
+
+            int cols = sqlite3_column_count(stmt);
+            string col_name;
+            string col_value;
+
+            while (sqlite3_step(stmt) == SQLITE_ROW)
             {
-                if (sqlite3_column_name(stmt, i))
-                    col_name = const_cast<const char *>(sqlite3_column_name(stmt, i));
+                SqlEntry *sqlEntryNew = new SqlEntry(tableName, cols);
+                sqlEntryNew->fromSql(stmt);
+
+                // check if entry is already in list
+                SqlEntry *sqlEntryOld = getSqlEntry(sqlEntryNew->getUniqueID());
+
+                if (sqlEntryOld != nullptr)
+                {
+                    // exits already -> update
+                    sqlEntryOld->fromSql(stmt);
+                }
                 else
-                    col_name = "LEER";
+                {
+                    // perform action, add new
+                    onNewSqlEntry(tableName, sqlEntryNew);
+                    sqlEntrys.push_back(sqlEntryNew);
+                }
 
-                if (sqlite3_column_text(stmt, i))
-                    col_value = reinterpret_cast<const char *>(sqlite3_column_text(stmt, i));
-                else
-                    col_value = "LEER";
-
-                // cout << " !! get  " << col_name << " "<< col_value <<"!!  ";
-
-                // fill in
-                int   key = newSqlElement->getField_Key(col_name);
-                bool *varB = newSqlElement->getFieldBool(key);
-                int  *varI = newSqlElement->getFieldInt(key);
-                string *varS = newSqlElement->getFieldString(key);
-
-                if (varB != nullptr)
-                    *varB = sqlite3_column_int(stmt, i);
-
-                if (varI != nullptr)
-                    *varI = sqlite3_column_int(stmt, i);
-
-                if (varS != nullptr)
-                    *varS = string(reinterpret_cast<const char *>(sqlite3_column_text(stmt, i)));
-
-                out += newSqlElement->getField_Name(i) + ": " + newSqlElement->getField(i) + ", ";
             }
-            log.info(out);
-
-            // add to sqlElement list
-            sqlElements.push_back(newSqlElement);
+            sqlite3_finalize(stmt);
         }
-        sqlite3_finalize(stmt);
     }
+    sqlite3_finalize(stmtListTables);
 
     // set update all sqlElements -> find parent
+    /*
     for (SqlElement *element : Save::sqlElements)
     {
-        log.info("-- " + dynamic_cast<Container*>(element)->name);
+        log.info("-- " + dynamic_cast<Container *>(element)->name);
         element->updateAll();
-    }
+    }*/
 }
 
 
+// -- GET SQL ENTRY BY ID ---------------
+SqlEntry *Save::getSqlEntry(string id)
+{
+    for (auto sqlEntry : sqlEntrys)
+    {
+        if (sqlEntry->getUniqueID() == id)
+        {
+            // found
+            log.debug("getSqlEntry found " + id);
+            return sqlEntry;
+        }
+    }
+    return nullptr;
+}
+
+
+/*
 // -- ADD ELEMENT TO DB -----------------
 void Save::dbAddNewElement(SqlElement *element)
 {
     sqlite3_stmt *stmt;
     string        sql, sqlFields, sqlValues;
 
-    for (int i = 1 /*0 - reserved for key*/; i < element->fieldsAmount; ++i)
+    for (int i = 1 /*0 - reserved for key*-/; i < element->fieldsAmount; ++i)
     {
         string seperator = (i < element->fieldsAmount-1) ? "," : "";
 
@@ -223,7 +298,7 @@ void Save::dbUpdateElement(SqlElement *element)
     // element need upload
     element->uploaded = false;
 
-    for (int i = 1 /*0 - reserved for key*/; i < element->fieldsAmount; ++i)
+    for (int i = 1 /*0 - reserved for key*-/; i < element->fieldsAmount; ++i)
     {
         string seperator = (i < element->fieldsAmount-1) ? "," : "";
 
@@ -253,7 +328,7 @@ void Save::dbUpdateElement(SqlElement *element)
 void Save::dbRemoveElement(SqlElement *element)
 {
 }
-
+*/
 
 
 // -- PROCESS PACKET --------------------

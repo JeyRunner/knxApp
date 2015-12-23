@@ -18,13 +18,10 @@
 
 
 // -- CREATE OBJECT ---------------------
-Container::Container() : Box::Box("", ".cont"), SqlElement()
+Container::Container() : Box::Box("", ".cont")
 {
-    // sql
-    fieldsAmount+= 1;
-    tableName    = "container";
-    name         = "";
-    parentId     = -1;
+    setLogName("CONT");
+    sqlEntry = NULL;
 
     // create ui
     txtName = new Text("", ".contTxt");
@@ -32,10 +29,99 @@ Container::Container() : Box::Box("", ".cont"), SqlElement()
 
     addChild(txtName);
     addChild(boxContend);
+
+    Save::containers.push_back(this);
 }
 
 
+// -- CONTEND ---------------------------
+void Container::addContend(Container *view)
+{
+    boxContend->addChild(view);
+}
+
+void Container::removeContend(Container *view)
+{
+    if (dynamic_cast<View*>(view))
+        boxContend->removeChild(dynamic_cast<View*>(view));
+}
+
+
+// -- SQL ENTRY ------------------------
+void Container::onChangeField(SqlEntry::Field *field)
+{
+    if (field->name == "name")
+    {
+        txtName->text(field->getValue());
+    }
+
+    if (field->name == "parentId")
+    {
+        warn("parent id changed but there is no code to find new parent :(");
+    }
+}
+
+
+// -- BIND TO SQL ENTRY ----------------
+void Container::bindToSqlEntry(SqlEntry* entry)
+{
+    this->sqlEntry = entry;
+    entry->setOnChangeField(this);
+    txtName->text(sqlEntry->getField("name")->getValue());
+}
+
+
+// -- UPDATE PARENT --------------------
+void Container::updateParent()
+{
+    if (sqlEntry == NULL)
+        return;
+
+    string parentId = sqlEntry->getField("parentId")->getValue();
+    string myId     = sqlEntry->getField("id")->getValue();
+    string localId  = sqlEntry->getField("localId")->getValue();
+
+    // if not set -> child of root
+    if (parentId == "-1")
+    {
+        trace(localId + ":  added to root contend");
+        Save::containerRoot->addContend(this);
+        return;
+    }
+
+
+    // find parent
+    for (Container *container : Save::containers)
+    {
+
+        if (container->sqlEntry != NULL)
+        {
+            string otherId = container->sqlEntry->getField("id")->getValue();
+            string otherLocalId = container->sqlEntry->getField("localId")->getValue();
+
+            if (((otherId != "-1") && (otherId == parentId))
+                || ((otherId == "-1") && (otherLocalId != "-1") && (otherLocalId == parentId)))
+            {
+                // remove from old parent, add to new
+                //if ((parent != NULL) && (parent != element))
+                // parent->removeContend(this);
+
+                if (parent != container)
+                    container->addContend(this);
+
+                parent = container;
+                break;
+            }
+        }
+    }
+}
+
+
+
+
+
 // -- UPDATE TEXT ----------------------
+/*
 void Container::updateName(string text)
 {
     name = text;
@@ -47,96 +133,4 @@ void Container::setName(string text)
     updateName(text);
     Save::dbUpdateElement(this);
 }
-
-// -- UPDATE ALL ------------------------
-void Container::updateAll()
-{
-    SqlElement::updateAll();
-    updateName(name);
-}
-
-
-// -- CONTEND ---------------------------
-void Container::addContend(SqlElement *view)
-{
-    if (dynamic_cast<View*>(view))
-        boxContend->addChild(dynamic_cast<View*>(view));
-}
-
-void Container::removeContend(SqlElement *view)
-{
-    if (dynamic_cast<View*>(view))
-        boxContend->removeChild(dynamic_cast<View*>(view));
-}
-
-
-
-// == GET FIELD BY NAME ========================
-bool* Container::getFieldBool(int key)
-{
-    bool *val = SqlElement::getFieldBool(key);
-    if (val != nullptr)
-        return val;
-
-    /*
-    switch (key)
-    {
-        case SQL_FIELD_:
-            return &;
-    }
-    */
-}
-
-int* Container::getFieldInt(int key)
-{
-    int *val = SqlElement::getFieldInt(key);
-    if (val != nullptr)
-        return val;
-
-    /*
-    switch (key)
-    {
-        case SQL_FIELD_PARENT_ID:
-            return &parentId;
-    }
-    */
-}
-
-string* Container::getFieldString(int key)
-{
-    string *val = SqlElement::getFieldString(key);
-    if (val)
-        return val;
-
-    switch (key)
-    {
-        case SQL_FIELD_NAME:
-            return &name;
-
-        default:
-            return nullptr;
-    }
-}
-
-int Container::getField_Key(string name)
-{
-    int val = SqlElement::getField_Key(name);
-    if (val > -1)
-        return val;
-
-    if (name == "name")
-        return SQL_FIELD_NAME;
-}
-
-string Container::getField_Name(int key)
-{
-    string val = SqlElement::getField_Name(key);
-    if (!val.empty())
-        return val;
-
-    switch (key)
-    {
-        case SQL_FIELD_NAME:
-            return "name";
-    }
-}
+ */

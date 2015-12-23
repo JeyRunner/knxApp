@@ -20,10 +20,10 @@
 #include "ui/Alert.h"
 #include "ui/Container.h"
 #include "Save.h"
-#include "../../protocol/src/PacketFactory.h"
-#include "../../protocol/src/Packet.h"
-#include "../../protocol/src/Client.h"
-#include "../../protocol/src/to_string.cpp"
+#include <PacketFactory.h>
+#include <Packet.h>
+#include <Client.h>
+#include <to_string.cpp>
 
 
 using namespace std;
