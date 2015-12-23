@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include "knx/TunnelingRequest.h"
+#include "save/Save.h"
 #include "../../protocol/src/Server.h"
 #include "../../protocol/src/KnxPacket.h"
 
@@ -105,6 +106,9 @@ int main(int argc, char** argv)
 
 
     // -- MAIN ---- ---------
+    // init local database
+    Save::init();
+
     // create knx connection
     knx = new KnxConnection(serverIp, serverPort);
     knx->onReceiveDataPacket(&onKnxReceive);     // on new packet
@@ -120,16 +124,19 @@ int main(int argc, char** argv)
     server->init();                              // start
     server->start();
 
-
+    /*
     // not close
     while (true)
     {
         sleep(10000);
 
     }
+    */
 
     // -- END  LOOP ---------
 
+    // close database
+    Save::close();
 
     // close Log
     closelog();

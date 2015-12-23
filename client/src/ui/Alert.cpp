@@ -47,9 +47,9 @@ void Alert::init()
     styBox->top->set(200);
     styBox->left->set(40);
     styBox->right->set(40);
-    styBox->backgroundColor->set("FFFFFFFF"); // white
+    styBox->backgroundColor->set("CCCCCCFF"); // white
 
-    styHead->backgroundColor->set("33B5E5");  // blue
+    styHead->backgroundColor->set("33B5E5AA");  // blue
     styHead->textColor->set("FFFFFFFF");      // white
     styHead->textSize->set(refTextSize*1.3);
     styHead->paddingLeft->set(5);
@@ -63,7 +63,7 @@ void Alert::init()
     styButt->paddingRight->set(5);
     styButt->paddingTop->set(5);
     styButt->paddingBottom->set(10);
-    styButt->backgroundColor->set("33B5E5"); // blue
+    styButt->backgroundColor->set("33B5E5AA"); // blue
     styButt->textColor->set("FFFFFF");
 
     styEBox->paddingLeft->set(10);

@@ -10,10 +10,10 @@ import android.util.Log;
 public class knxApp extends SDLActivity {
 
     // load libs
-    static 
-    {
-        // System.loadLibrary("knxAppLib");
-    }
+    static
+     {
+        System.loadLibrary("sqlitenative");
+     }
     
     public static AssetManager mAssetMgr;
     

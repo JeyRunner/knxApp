@@ -7,6 +7,7 @@
 
 /* Include the SDL main definition header */
 #include <SDL_main.h>
+#include <android/asset_manager_jni.h>
 
 /*******************************************************************************
                  Functions called by JNI

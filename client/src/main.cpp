@@ -12,10 +12,14 @@
 #include <stdlib.h>
 #include <iostream>
 #include <Ui.h>
+#include <Log.h>
 #include <Text.h>
 #include <Box.h>
 #include <Style.h>
-#include "Alert.h"
+#include <Log.h>
+#include "ui/Alert.h"
+#include "ui/Container.h"
+#include "Save.h"
 #include "../../protocol/src/PacketFactory.h"
 #include "../../protocol/src/Packet.h"
 #include "../../protocol/src/Client.h"
@@ -36,6 +40,7 @@ Box *root;
 Text *headline;
 Text *out;
 Alert *alert;
+Log logm;
 
 // pre def
 void onError(string msg);
@@ -49,10 +54,12 @@ void onReceive(home::Packet *packet);
 int main(int argc, char **argv)
 {
     // start
-    cout << "[ OK ] start program" << endl;
+    logm.setLogName("MAIN");
+    logm.ok("start program");
 
     // init ui
     Ui::init();
+    Log::setLogLevel(UI_LOG_LEVEL_DEBUG);
 
 
     // ui components
@@ -60,13 +67,36 @@ int main(int argc, char **argv)
     headline = new Text();
     out      = new Text();
     alert    = new Alert(root);
+    Save::containerRoot = new Container();
 
     headline->text("Knx");
     root->addChild(headline);
-    root->addChild(out);
+    root->addChild(Save::containerRoot);
+    //root->addChild(out);
 
     // style
     Style::getRule("*")->textSize->set(30);
+
+    StyleRule stCont(".cont");
+    StyleRule stContTxt(".contTxt");
+    StyleRule stContCont(".contCont");
+    stCont.backgroundColor->set("#33B5E5");
+    stContTxt.textColor->set("#FFFFFF");
+    stContTxt.paddingBottom->set(5);
+    stContTxt.paddingLeft->set(5);
+    stContTxt.paddingRight->set(5);
+    stCont.top->set(5);
+    stCont.left->set(5);
+    stCont.right->set(5);
+    stCont.bottom->set(5);
+    stContCont.paddingLeft->set(15);
+    stContCont.paddingRight->set(5);
+    stContCont.paddingTop->set(5);
+    stContCont.paddingBottom->set(5);
+    stContCont.backgroundColor->set("#FFFFFF");
+    stContCont.left->set(2);
+    stContCont.bottom->set(2);
+    stContCont.right->set(2);
 
     // in android other font path
     #ifdef pl_andr
@@ -79,6 +109,22 @@ int main(int argc, char **argv)
     ui->setRootView(root);
     ui->frameRenderer->start();
 
+
+    // init database
+
+    Save::init();
+
+    /*
+    Container *container = new Container();
+    container->parentId = 7;
+    Save::dbAddNewElement(container);
+    container->setName(": 9 - parent 7");
+
+    Container *container2 = new Container();
+    container2->parentId = 9;
+    Save::dbAddNewElement(container2);
+    container2->setName(": 10 - parent 9");
+    */
 
     // setup home server connection
     client = new home::Client(SERVER_IP, SERVER_PORT);
@@ -105,7 +151,7 @@ int main(int argc, char **argv)
 // -- ON RECEIVE ------------------------
 void onReceive(home::Packet *packet)
 {
-    cout << "[CLIE] receive packet '" << packet->type << "'" << endl;
+    logm.info("receive packet '" + str(packet->type) + "'");
 
     // cast to knx packet
     home::KnxPacket *clientPacket = ((home::KnxPacket*)packet);
@@ -144,7 +190,7 @@ void onError(string msg)
 // -- ON DISCONNECT ---------------------
 void onDisconnect()
 {
-    cout << "[CLIE] disconnected" << endl;
+    logm.err("disconnected");
 
     //alert
     Text *button = new Text();
