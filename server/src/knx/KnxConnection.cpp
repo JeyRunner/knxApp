@@ -80,6 +80,13 @@ bool KnxConnection::connectServer()
         a("[NET ] open socket [ERR]");
         return false;
     }
+
+    struct timeval tv;
+    tv.tv_sec = 0;
+    tv.tv_usec = 100000;
+    if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
+        perror("Error");
+    }
     //else
         //a("[NET ] open socket [OK]");
     
