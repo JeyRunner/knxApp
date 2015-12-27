@@ -20,6 +20,7 @@
 #include <iostream>
 #include <string>
 #include <stdlib.h>
+
 #ifdef pl_andr
 #include "../../client/android/include/sqlite3.h"
 #include <android/asset_manager_jni.h>
@@ -39,6 +40,7 @@ class SqlEntry
 
         int    fieldsAmount; // number of sql fields
         string tableName;    // name of sql table
+        bool   inLocalDb;    // entry already in local sql db
 
 
 
@@ -74,6 +76,7 @@ class SqlEntry
                 string value;
         };
         list <Field*> fields;
+        Field* getField(string name, bool creatIfNotExits);
         Field* getField(string name);
         void addField(Field *field);
         void removeField(Field *field);
@@ -94,7 +97,7 @@ class SqlEntry
 
         // convert
         void    fromSql(sqlite3_stmt *stmt); // call after sqlite3_step
-        string  toSql();
+        string  toSql(bool withKeyFields, bool insertSyntax);
         void    fromJSON();
         string  toJSON();
 
@@ -102,6 +105,11 @@ class SqlEntry
         void    syncPush();
 
 
+        // execute sql function
+        static function<bool (string sql)> sqlQuery;
+        static sqlite3 *database;
+
+        /*
         struct GenerateIdForTable
         {
             GenerateIdForTable(string table, function<string (SqlEntry *entry)> func)
@@ -110,6 +118,43 @@ class SqlEntry
             function<string (SqlEntry *entry)> functionDo;
         };
         static vector<GenerateIdForTable*> generateIdForTableList;
+        */
+
+        // key fields of table
+        struct KeyFields
+        {
+            string table;
+            string primaryAutoIncrementKey;
+            vector<string> keys;    // fist key field hat to be autoincrement
+            KeyFields(string tableName, string primaryAutoIncrementKeyField, vector<string> keyFields)
+            {
+                primaryAutoIncrementKey = primaryAutoIncrementKeyField;
+                table = tableName;
+                keys  = keyFields;
+            }
+            KeyFields(string tableName, vector<string> keyFields)
+            {
+                table = tableName;
+                keys  = keyFields;
+            };
+            bool hasKeyField(string fieldName);
+        };
+        static vector<KeyFields *> keyFields;
+        static KeyFields * getKeyFieldsOfTable(string tableName);
+
+        // what to do when get new sqlElement
+        struct OnNewEntryOfTable
+        {
+            OnNewEntryOfTable(string table, function<void (SqlEntry *entry)> func)
+            { tableName = table; functionDo = func; }
+            string tableName;
+            function<void (SqlEntry *entry)> functionDo;
+        };
+        static vector<OnNewEntryOfTable*> onNewEntryOfTableRules;
+        static void onNewEntryOfTable(string tableName, SqlEntry *entry); // perform necessary acton when creating new entry
+
+    private:
+        KeyFields *myKeyFields;
 };
 
 #endif /* KNX_SQLELEMENT_H */

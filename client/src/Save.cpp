@@ -15,12 +15,13 @@
 #include <iostream>
 
 // static
-sqlite3*          Save::database;
-list<SqlEntry*>   Save::sqlEntrys;
-Container*        Save::containerRoot;
-list<Container*>  Save::containers;
-vector<Save::OnNewSqlEntryDo*> Save::onNewSqlEntryDo;
-Log               Save::log;
+sqlite3*                Save::database;
+list<SqlEntry*>         Save::sqlEntrys;
+ContainerView *         Save::containerRoot;
+list<ContainerView *>   Save::containers;
+list<DeviceValueView *> Save::deviceValues;
+list<SqlEntry*>         Save::knxValues;
+Log                     Save::log;
 
 
 // -- INIT DATABASE ---------------------
@@ -29,31 +30,12 @@ void Save::init()
     log.setLogName("SAVE");
 
 
-    // what to do when get new sqlElement
-    onNewSqlEntryDo.push_back(new Save::OnNewSqlEntryDo("container",
-                                                    [&](SqlEntry *entry) {
-                                                        Container *container = new Container();
-                                                        container->bindToSqlEntry(entry);
-                                                    }));
-
-    // how to generate id for entry from table
-    SqlEntry::generateIdForTableList.push_back(new SqlEntry::GenerateIdForTable("container",
-                                                                                [&] (SqlEntry *entry) {
-                                                                                    return (entry->getField("id")->getValue()) + (entry->getField("localId")->getValue());
-                                                                                }));
-    SqlEntry::generateIdForTableList.push_back(new SqlEntry::GenerateIdForTable("containerValues",
-                                                                                [&] (SqlEntry *entry) {
-                                                                                    return (entry->getField("id")->getValue()) + (entry->getField("localId")->getValue());
-                                                                                }));
-
-
-
-    // open database
-    #ifdef pl_andr
+    // -- open database
+#ifdef pl_andr
     char databasePath[] = "home.client.db";
     #else
     char databasePath[] = "/home/joshua/Schreibtisch/home.client.db";
-    #endif
+#endif
     sqlite3_stmt *stmt;
 
 #ifdef pl_andr
@@ -89,33 +71,92 @@ void Save::init()
     // open database
     bool ok = (sqlite3_open(databasePath, &database) == SQLITE_OK);
     log.out("open database", !ok,
-        sqlite3_errmsg(database));
+            sqlite3_errmsg(database));
+
+
+
+
+    // set entry sqlQuery function
+    SqlEntry::sqlQuery = ([&](string sql){ return sqlQuery(sql); });
+    SqlEntry::database = database;
+
+    // what to do when get new sqlElement
+    SqlEntry::onNewEntryOfTableRules = {new SqlEntry::OnNewEntryOfTable("container",
+                                                                  [&](SqlEntry *entry)
+                                                                  {
+                                                                      ContainerView *container = new ContainerView();
+                                                                      container->bindToSqlEntry(entry);
+                                                                  }),
+                                        new SqlEntry::OnNewEntryOfTable("deviceValues",
+                                                                        [&](SqlEntry *entry)
+                                                                        {
+                                                                            DeviceValueView *valueView;
+
+                                                                            string type = entry->getField("type")->getValue();
+                                                                            if (type == "switch")
+                                                                                valueView = new SwitchDeviceValue();
+                                                                            else
+                                                                                valueView = new DeviceValueView();
+
+                                                                            valueView->bindToSqlEntry(entry);
+                                                                        }),
+                                        new SqlEntry::OnNewEntryOfTable("knxValues",
+                                                                        [&](SqlEntry *entry)
+                                                                        {
+                                                                            log.debug("new knxValue");
+                                                                            knxValues.push_back(entry);
+                                                                            string valueId = entry->getField("valueId")->getValue();
+
+                                                                            // put to fitting deviceValue
+                                                                            for (DeviceValueView *valueView : deviceValues)
+                                                                            {
+                                                                                //log.debug("knxValue("+entry->getField("valueId")->getValue()+") find deviceValue / candidat: " + valueView->fieldId->getValue());
+                                                                                if (valueView->sqlEntry->getField("id")->getValue() == valueId)
+                                                                                {
+                                                                                    log.ok("knxValue("+entry->getField("valueId")->getValue()+") fitting deviceValue found: " + valueView->fieldId->getValue());
+                                                                                    valueView->bindToKnxValue(entry);
+                                                                                    return;
+                                                                                }
+                                                                            }
+
+                                                                            log.warn("knxValue("+entry->getField("valueId")->getValue()+") fitting deviceValue not found");
+                                                                        })};
+
+    // define key fields of table
+    // first key is AUTOINCREMENT
+    SqlEntry::keyFields = { //      tableName       autoincrement   keyFields
+            new SqlEntry::KeyFields("container",    "id",           {"id"}),
+            new SqlEntry::KeyFields("deviceValues", "id",           {"id"}),
+            new SqlEntry::KeyFields("knxValues",                    {"name", "valueId"})
+    };
+
+
 
 
 
     // -- create tables if not exists
-    string sql =    "CREATE TABLE IF NOT EXISTS containerValues(" \
-                    "localId    INTEGER PRIMARY KEY AUTOINCREMENT," \
-                    "id         INTEGER," \
+    string sql =    "CREATE TABLE IF NOT EXISTS deviceValues(" \
+                    "id         INTEGER PRIMARY KEY AUTOINCREMENT," \
                     "name       TEXT," \
                     "type       TEXT," \
                     "knxIn      TEXT," \
                     "knxOut     TEXT," \
                     "deviceId   INTEGER," \
                     "value      TEXT,"
-                    "parentId   INTEGER," \
-                    "changeNr   INTEGER," \
-                    "uploaded   NUMERIC," \
-                    "time       INTEGER" \
+                    "parentId   INTEGER" \
                     ");" \
+
+                    "CREATE TABLE IF NOT EXISTS knxValues(" \
+                    "name       TEXT,"
+                    "valueId    INTEGER," \
+                    "knxAddr    TEXT," \
+                    "value      TEXT" \
+                    ");" \
+
                     "CREATE TABLE IF NOT EXISTS container( " \
-                    "localId    INTEGER PRIMARY KEY AUTOINCREMENT," \
-                    "id         INTEGER," \
+                    "id         INTEGER PRIMARY KEY AUTOINCREMENT," \
                     "name       TEXT," \
-                    "parentId   INTEGER," \
-                    "changeNr   INTEGER," \
-                    "uploaded   NUMERIC," \
-                    "time       INTEGER" \
+                    "parentId   INTEGER" \
                     ");";
 
 
@@ -133,29 +174,22 @@ void Save::init()
     for (auto container : containers)
     {
         container->updateParent();
-        //log.debug(container->sqlEntry->tableName);
-        /*
-        if (container->sqlEntry == NULL)
-        {
-            log.debug("container sqlEntry is NULL");
-        }
-        else
-        {
-            log.debug("container sqlEntry is ok  :" + container->sqlEntry->getField("name")->getValue());
-        }*/
     }
-}
 
-
-// -- GET ACTION BY TABEL NAME ----------
-void Save::onNewSqlEntry(string tableName, SqlEntry *entry)
-{
-    for (auto endo : onNewSqlEntryDo)
+    log.debug("find parents for deviceValues ...");
+    // find parents for deviceValues
+    for (auto deviceValue : deviceValues)
     {
-        if (endo->tableName == tableName)
-            endo->functionDo(entry);
+        deviceValue->updateParent();
     }
-}
+    log.ok("find parents for deviceValues");
+
+    // find deviceValues for knxValues
+    for (auto deviceValue : deviceValues)
+    {
+        deviceValue->updateKnxValues();
+    }
+};
 
 
 // -- LOAD ELEMENT FROM DB --------------
@@ -214,13 +248,16 @@ void Save::dbLoadElements()
                 if (sqlEntryOld != nullptr)
                 {
                     // exits already -> update
+                    sqlEntryOld->inLocalDb = true;
                     sqlEntryOld->fromSql(stmt);
                 }
                 else
                 {
                     // perform action, add new
-                    onNewSqlEntry(tableName, sqlEntryNew);
+                    sqlEntryNew->inLocalDb = true;
+                    SqlEntry::onNewEntryOfTable(tableName, sqlEntryNew);
                     sqlEntrys.push_back(sqlEntryNew);
+                    //sqlEntryNew->syncPush();
                 }
 
             }
@@ -228,14 +265,6 @@ void Save::dbLoadElements()
         }
     }
     sqlite3_finalize(stmtListTables);
-
-    // set update all sqlElements -> find parent
-    /*
-    for (SqlElement *element : Save::sqlElements)
-    {
-        log.info("-- " + dynamic_cast<Container *>(element)->name);
-        element->updateAll();
-    }*/
 }
 
 
@@ -255,80 +284,21 @@ SqlEntry *Save::getSqlEntry(string id)
 }
 
 
-/*
-// -- ADD ELEMENT TO DB -----------------
-void Save::dbAddNewElement(SqlElement *element)
+// -- SQL QUERY -------------------------
+bool Save::sqlQuery(string sql)
 {
-    sqlite3_stmt *stmt;
-    string        sql, sqlFields, sqlValues;
+    char *err;
+    bool ok = (sqlite3_exec(database, sql.c_str(), NULL, NULL, &err) == SQLITE_OK);
 
-    for (int i = 1 /*0 - reserved for key*-/; i < element->fieldsAmount; ++i)
+    if (!ok)
     {
-        string seperator = (i < element->fieldsAmount-1) ? "," : "";
-
-        sqlFields+= "'" + element->getField_Name(i) + "'" + seperator;
-        sqlValues+= "'" + element->getField(i) + "'" + seperator;
+        string errStr = string(err);
+        log.err("execute sql '" + sql + "'  err: '" +errStr+ "'");
     }
-
-    sql =  "INSERT INTO " + element->tableName + "(" + sqlFields + ") VALUES(" + sqlValues + ");";
-
-    bool ok = sqlite3_prepare_v2(database, sql.c_str(), sql.size(), &stmt, 0) == SQLITE_OK;
-    ok = sqlite3_step(stmt) == SQLITE_DONE;
-    sqlite3_finalize(stmt);
-
-    // set local id
-    element->localId = sqlite3_last_insert_rowid(database);
-
-    log.out("insert element |" + sql + "| localId=" + to_string(element->localId), !ok,
-        sqlite3_errmsg(database));
-
-    // search for parent, ...
-    element->updateAll();
-
-    // add to own list
-    sqlElements.push_back(element);
-}
-
-// -- UPDATE ELEMENT IN DB --------------
-void Save::dbUpdateElement(SqlElement *element)
-{
-    sqlite3_stmt *stmt;
-    string        sql, sqlData, sqlWhere;
-
-    // element need upload
-    element->uploaded = false;
-
-    for (int i = 1 /*0 - reserved for key*-/; i < element->fieldsAmount; ++i)
-    {
-        string seperator = (i < element->fieldsAmount-1) ? "," : "";
-
-        sqlData+= "'" + element->getField_Name(i) + "'=";
-        sqlData+= "'" + element->getField(i) + "'" + seperator;
-    }
-
-
-    // take available id
-    if (element->id > -1)
-        sqlWhere = "id=" + to_string(element->id);
-    else if (element->localId > -1)
-        sqlWhere = "localid=" + to_string(element->localId);
     else
-        log.out("get sql elements available id " + to_string(element->localId), true, "id and localId not set");
-
-
-    sql =  "UPDATE " + element->tableName + " SET " + sqlData + " WHERE "+ sqlWhere +";";
-
-    bool ok = sqlite3_prepare_v2(database, sql.c_str(), sql.size(), &stmt, 0) == SQLITE_OK;
-    ok = sqlite3_step(stmt) == SQLITE_DONE;
-    log.out("update element |" + sql + "|", !ok,
-        sqlite3_errmsg(database));
+        log.ok("execute sql '" +sql+ "'");
+    return ok;
 }
-
-// -- REMOVE ELEMENT FROM DB ------------
-void Save::dbRemoveElement(SqlElement *element)
-{
-}
-*/
 
 
 // -- PROCESS PACKET --------------------

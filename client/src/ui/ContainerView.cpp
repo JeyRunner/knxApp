@@ -14,11 +14,11 @@
  * --------------------------------------
  */
 
-#include "Container.h"
+#include "ContainerView.h"
 
 
 // -- CREATE OBJECT ---------------------
-Container::Container() : Box::Box("", ".cont")
+ContainerView::ContainerView() : Box::Box("", ".cont")
 {
     setLogName("CONT");
     sqlEntry = NULL;
@@ -35,12 +35,12 @@ Container::Container() : Box::Box("", ".cont")
 
 
 // -- CONTEND ---------------------------
-void Container::addContend(Container *view)
+void ContainerView::addContend(View *view)
 {
     boxContend->addChild(view);
 }
 
-void Container::removeContend(Container *view)
+void ContainerView::removeContend(View *view)
 {
     if (dynamic_cast<View*>(view))
         boxContend->removeChild(dynamic_cast<View*>(view));
@@ -48,7 +48,7 @@ void Container::removeContend(Container *view)
 
 
 // -- SQL ENTRY ------------------------
-void Container::onChangeField(SqlEntry::Field *field)
+void ContainerView::onChangeField(SqlEntry::Field *field)
 {
     if (field->name == "name")
     {
@@ -58,12 +58,13 @@ void Container::onChangeField(SqlEntry::Field *field)
     if (field->name == "parentId")
     {
         warn("parent id changed but there is no code to find new parent :(");
+        updateParent();
     }
 }
 
 
 // -- BIND TO SQL ENTRY ----------------
-void Container::bindToSqlEntry(SqlEntry* entry)
+void ContainerView::bindToSqlEntry(SqlEntry* entry)
 {
     this->sqlEntry = entry;
     entry->setOnChangeField(this);
@@ -72,7 +73,7 @@ void Container::bindToSqlEntry(SqlEntry* entry)
 
 
 // -- UPDATE PARENT --------------------
-void Container::updateParent()
+void ContainerView::updateParent()
 {
     if (sqlEntry == NULL)
         return;
@@ -91,20 +92,18 @@ void Container::updateParent()
 
 
     // find parent
-    for (Container *container : Save::containers)
+    for (ContainerView *container : Save::containers)
     {
 
         if (container->sqlEntry != NULL)
         {
             string otherId = container->sqlEntry->getField("id")->getValue();
-            string otherLocalId = container->sqlEntry->getField("localId")->getValue();
 
-            if (((otherId != "-1") && (otherId == parentId))
-                || ((otherId == "-1") && (otherLocalId != "-1") && (otherLocalId == parentId)))
+            if (otherId == parentId)
             {
                 // remove from old parent, add to new
-                //if ((parent != NULL) && (parent != element))
-                // parent->removeContend(this);
+                if ((parent != NULL) && (parent != container))
+                    parent->removeContend(this);
 
                 if (parent != container)
                     container->addContend(this);
@@ -115,22 +114,3 @@ void Container::updateParent()
         }
     }
 }
-
-
-
-
-
-// -- UPDATE TEXT ----------------------
-/*
-void Container::updateName(string text)
-{
-    name = text;
-    txtName->text(name);
-}
-
-void Container::setName(string text)
-{
-    updateName(text);
-    Save::dbUpdateElement(this);
-}
- */

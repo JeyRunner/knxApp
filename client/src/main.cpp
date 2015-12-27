@@ -18,7 +18,8 @@
 #include <Style.h>
 #include <Log.h>
 #include "ui/Alert.h"
-#include "ui/Container.h"
+#include "ui/ContainerView.h"
+#include "ui/KnxUi.h"
 #include "Save.h"
 #include <PacketFactory.h>
 #include <Packet.h>
@@ -42,6 +43,7 @@ Text *out;
 Alert *alert;
 Log logm;
 
+
 // pre def
 void onError(string msg);
 void onDisconnect();
@@ -61,22 +63,66 @@ int main(int argc, char **argv)
     Ui::init();
     Log::setLogLevel(UI_LOG_LEVEL_DEBUG);
 
+    KnxUi::modeEdit = false;
+    KnxUi::editing  = NULL;
 
     // ui components
     root     = new Box();
+    KnxUi::root = root;
     headline = new Text();
+    KnxUi::btEdit   = new Text();
+    KnxUi::boxEdit  = new Box();
     out      = new Text();
     alert    = new Alert(root);
-    Save::containerRoot = new Container();
+    Save::containerRoot = new ContainerView();
 
     headline->text("Knx");
+    headline->style->width->set(100);
     root->addChild(headline);
+
+    KnxUi::btEdit->text("Bearbeiten");
+    KnxUi::btEdit->style->backgroundColor->set("AACCCC");
+    KnxUi::btEdit->style->width->set(350);
+    root->addChild(KnxUi::btEdit);
+    KnxUi::btEdit->onTouchDown([&](View* v, Point a, Point b, Point c){
+        if (KnxUi::modeEdit)
+        {
+            KnxUi::btEdit->text("Bearbeiten");
+            KnxUi::btEdit->style->backgroundColor->set("AACCCC");
+            KnxUi::removeEdit();
+            KnxUi::modeEdit = false;
+        }
+        else
+        {
+            KnxUi::btEdit->text("Bearbeiten beenden");
+            KnxUi::btEdit->style->backgroundColor->set("FFCCCC");
+            KnxUi::modeEdit = true;
+        }
+    });
+
+    KnxUi::boxEdit->style->position->set(UI_ATTR_POSITION_ABSOLUTE);
+    KnxUi::boxEdit->style->top->set(450);
+    KnxUi::boxEdit->style->height->setPercent(100);
+    KnxUi::boxEdit->style->backgroundColor->set("FFFFFF");
+
+
     root->addChild(Save::containerRoot);
+    //root->addChild(KnxUi::boxEdit);
+
+    headline->onTouchDown([&](View* v, Point a, Point b, Point c){
+        cout << endl;
+        for (auto entry : Save::knxValues)
+        {
+            logm.debug(entry->toSql(true, false));
+        }
+        cout << endl;
+    });
     //root->addChild(out);
 
     // style
     Style::getRule("*")->textSize->set(30);
 
+    // container
     StyleRule stCont(".cont");
     StyleRule stContTxt(".contTxt");
     StyleRule stContCont(".contCont");
@@ -98,6 +144,35 @@ int main(int argc, char **argv)
     stContCont.bottom->set(2);
     stContCont.right->set(2);
 
+    // device value
+    StyleRule stVal(".val");
+    StyleRule stValName(".valName");
+    StyleRule stValBtOn(".valBtOn");
+    StyleRule stValTxtKnxEntry(".valTxtKnxEntry");
+    stVal.top->set(5);
+    stVal.left->set(5);
+    stVal.right->set(5);
+    stVal.bottom->set(5);
+    stVal.paddingBottom->set(5);
+    stVal.paddingTop->set(5);
+    stVal.paddingRight->set(5);
+    stVal.paddingLeft->set(5);
+    stVal.width->setPercent(45);
+    stValName.textSize->set(20);
+    stValName.textColor->set("#000000AA");
+    stValName.paddingBottom->set(5);
+    stValName.paddingLeft->set(5);
+    stValName.paddingRight->set(5);
+    stValName.bottom->set(5);
+    stValBtOn.textColor->set("#000000CC");
+    stValBtOn.paddingBottom->set(5);
+    stValBtOn.paddingLeft->set(5);
+    stValBtOn.paddingRight->set(5);
+    stValBtOn.textSize->set(22);
+    stValBtOn.left->setPercent(50);
+    stValTxtKnxEntry.width->set(200);
+
+
     // in android other font path
     #ifdef pl_andr
     Style::getRule("*")->textFamily->set("FreeSans.ttf");
@@ -111,16 +186,39 @@ int main(int argc, char **argv)
 
 
     // init database
-
     Save::init();
 
+
     /*
-    Container *container = new Container();
+    for (int i = 0; i < 10; ++i)
+    {
+        SwitchDeviceValue *switchDeviceValue = new SwitchDeviceValue();
+
+        SqlEntry *entry = new SqlEntry("containerValues", 3);
+        entry->addField(new SqlEntry::Field("name", "lich,,t" + str(i), entry));
+        entry->addField(new SqlEntry::Field("value", "0", entry));
+        entry->addField(new SqlEntry::Field("parentId", str(i), entry));
+        entry->onNewEntryOfTable(entry->tableName, entry);
+        entry->syncPush();
+
+        switchDeviceValue->bindToSqlEntry(entry);
+        Save::containerRoot->addContend(switchDeviceValue);
+        switchDeviceValue->updateParent();
+    }
+
+    */
+
+
+
+
+
+    /*
+    ContainerView *container = new ContainerView();
     container->parentId = 7;
     Save::dbAddNewElement(container);
     container->setName(": 9 - parent 7");
 
-    Container *container2 = new Container();
+    ContainerView *container2 = new ContainerView();
     container2->parentId = 9;
     Save::dbAddNewElement(container2);
     container2->setName(": 10 - parent 9");
@@ -147,7 +245,7 @@ int main(int argc, char **argv)
 }
 
 
-
+// ## NETWORK ###########################
 // -- ON RECEIVE ------------------------
 void onReceive(home::Packet *packet)
 {

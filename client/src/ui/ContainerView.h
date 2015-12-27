@@ -30,17 +30,17 @@
 using namespace std;
 
 
-/* Container class
+/* ContainerView class
  */
-class Container : public Box, public SqlEntry::OnChangeField
+class ContainerView : public Box, public SqlEntry::OnChangeField
 {
     public:
-        Box         *boxContend;
-        Container   *parent;
-        SqlEntry    *sqlEntry;
+        Box             *boxContend;
+        ContainerView   *parent;
+        SqlEntry        *sqlEntry;
 
-        Container();
-        void bindToSqlEntry(SqlEntry *entry);
+        ContainerView();
+        virtual void bindToSqlEntry(SqlEntry *entry);
 
         /*
         virtual void updateAll();       // after change in sql
@@ -49,13 +49,13 @@ class Container : public Box, public SqlEntry::OnChangeField
          */
         void updateParent();
 
-        void addContend(Container *view);    // add container/deviceValue
-        void removeContend(Container *view); // remove container/deviceValue
+        void addContend(View *view);    // add container/deviceValue
+        void removeContend(View *view); // remove container/deviceValue
 
         virtual void onChangeField(SqlEntry::Field *field);
-    Text  *txtName;
-    private:
 
+    private:
+        Text  *txtName;
 };
 
 #endif /* KNX_CONTAINER_H */
