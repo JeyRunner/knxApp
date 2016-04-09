@@ -24,7 +24,7 @@ DeviceValueView::DeviceValueView() : Box("", ".val")
     // create ui
     txtName     = new Text("", ".valName");
     editBox     = new Box();
-    editTxtName = new Text("", "");
+    editTxtName = new Text("", ".valEditName");
 
     addChild(txtName);
     editBox->addChild(editTxtName);
@@ -33,7 +33,6 @@ DeviceValueView::DeviceValueView() : Box("", ".val")
     txtName->onTouchDown([&](View* v, Point a, Point b, Point c){
         if (KnxUi::modeEdit)
         {
-            debug("edit me");
             KnxUi::setEdit(this->editBox);
         }
     });
@@ -63,12 +62,16 @@ void DeviceValueView::bindToKnxValue(SqlEntry *entry)
     knxValues.push_back(entry);
 
     // add to edit view
+    Box  *knxBox  = new Box();
+    knxBox->style->width->setPercent(100);
+
     Text *knxName = new Text("", ".valTxtKnxEntry");
     Text *knxAddr = new Text("", ".valTxtKnxEntry");
     knxName->text(entry->getField("name")->getValue());
     knxAddr->text(entry->getField("knxAddr")->getValue());
-    editBox->addChild(knxName);
-    editBox->addChild(knxAddr);
+    knxBox->addChild(knxName);
+    knxBox->addChild(knxAddr);
+    editBox->addChild(knxBox);
 }
 
 
@@ -153,7 +156,7 @@ SqlEntry *DeviceValueView::getKnxValue(string name, bool createIfNotExits)
 {
     for (auto value : knxValues)
     {
-        debug("search knxValue '"+ name +"' / candidat " + value->getField("name")->getValue());
+        // debug("search knxValue '"+ name +"' / candidat " + value->getField("name")->getValue());
         if (value->getField("name")->getValue() == name)
             return value;
     }

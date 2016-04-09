@@ -25,13 +25,14 @@
 #include <Packet.h>
 #include <Client.h>
 #include <to_string.cpp>
+#include <Renderer.h>
 
 
 using namespace std;
 
 
 // var
-const string    SERVER_IP   = "192.168.1.170";
+const string    SERVER_IP   = "127.0.0.1";//"192.168.1.170";
 const int       SERVER_PORT = 5049;
 home::Client *client;
 
@@ -67,7 +68,7 @@ int main(int argc, char **argv)
     KnxUi::editing  = NULL;
 
     // ui components
-    root     = new Box();
+    root     = new Box("root", "");
     KnxUi::root = root;
     headline = new Text();
     KnxUi::btEdit   = new Text();
@@ -75,6 +76,8 @@ int main(int argc, char **argv)
     out      = new Text();
     alert    = new Alert(root);
     Save::containerRoot = new ContainerView();
+    Save::containerRoot->style->height->setPercent(100);
+    //Save::containerRoot->style->scrollY->set(100);
 
     headline->text("Knx");
     headline->style->width->set(100);
@@ -82,7 +85,8 @@ int main(int argc, char **argv)
 
     KnxUi::btEdit->text("Bearbeiten");
     KnxUi::btEdit->style->backgroundColor->set("AACCCC");
-    KnxUi::btEdit->style->width->set(350);
+    KnxUi::btEdit->style->width->set(500);
+    KnxUi::btEdit->style->bottom->set(10);
     root->addChild(KnxUi::btEdit);
     KnxUi::btEdit->onTouchDown([&](View* v, Point a, Point b, Point c){
         if (KnxUi::modeEdit)
@@ -101,7 +105,7 @@ int main(int argc, char **argv)
     });
 
     KnxUi::boxEdit->style->position->set(UI_ATTR_POSITION_ABSOLUTE);
-    KnxUi::boxEdit->style->top->set(450);
+    //KnxUi::boxEdit->style->top->set(450);
     KnxUi::boxEdit->style->height->setPercent(100);
     KnxUi::boxEdit->style->backgroundColor->set("FFFFFF");
 
@@ -117,10 +121,17 @@ int main(int argc, char **argv)
         }
         cout << endl;
     });
-    //root->addChild(out);
+    root->addChild(out);
 
+    float fontScale = 1.0;
+    // in android other font path
+#ifdef pl_andr
+    Style::getRule("*")->textFamily->set("FreeSans.ttf");
+    //Style::getRule("*")->textSize->set(50);
+    fontScale = 1.8;
+#endif
     // style
-    Style::getRule("*")->textSize->set(30);
+    Style::getRule("*")->textSize->set(30 * fontScale);
 
     // container
     StyleRule stCont(".cont");
@@ -128,6 +139,7 @@ int main(int argc, char **argv)
     StyleRule stContCont(".contCont");
     stCont.backgroundColor->set("#33B5E5");
     stContTxt.textColor->set("#FFFFFF");
+    //stContCont.height->set(400);
     stContTxt.paddingBottom->set(5);
     stContTxt.paddingLeft->set(5);
     stContTxt.paddingRight->set(5);
@@ -135,6 +147,8 @@ int main(int argc, char **argv)
     stCont.left->set(5);
     stCont.right->set(5);
     stCont.bottom->set(5);
+    //stContCont.height->set(200);
+    //stContCont.overflow->set(UI_ATTR_OVERFLOW_VISIBLE);
     stContCont.paddingLeft->set(15);
     stContCont.paddingRight->set(5);
     stContCont.paddingTop->set(5);
@@ -149,6 +163,7 @@ int main(int argc, char **argv)
     StyleRule stValName(".valName");
     StyleRule stValBtOn(".valBtOn");
     StyleRule stValTxtKnxEntry(".valTxtKnxEntry");
+    StyleRule stValEditName(".valEditName");
     stVal.top->set(5);
     stVal.left->set(5);
     stVal.right->set(5);
@@ -158,7 +173,7 @@ int main(int argc, char **argv)
     stVal.paddingRight->set(5);
     stVal.paddingLeft->set(5);
     stVal.width->setPercent(45);
-    stValName.textSize->set(20);
+    stValName.textSize->set(20 * fontScale);
     stValName.textColor->set("#000000AA");
     stValName.paddingBottom->set(5);
     stValName.paddingLeft->set(5);
@@ -168,25 +183,31 @@ int main(int argc, char **argv)
     stValBtOn.paddingBottom->set(5);
     stValBtOn.paddingLeft->set(5);
     stValBtOn.paddingRight->set(5);
-    stValBtOn.textSize->set(22);
+    stValBtOn.textSize->set(22 * fontScale);
     stValBtOn.left->setPercent(50);
     stValTxtKnxEntry.width->set(200);
+    stValEditName.backgroundColor->set("#33B5E5");
+    stValEditName.textColor->set("#FFFFFF");
+    stValEditName.paddingTop->set(5);
+    stValEditName.paddingBottom->set(8);
+    stValEditName.paddingLeft->set(5);
+    stValEditName.paddingRight->set(5);
 
 
-    // in android other font path
-    #ifdef pl_andr
-    Style::getRule("*")->textFamily->set("FreeSans.ttf");
-    Style::getRule("*")->textSize->set(50);
-    #endif
+
 
     // open screen
     ui = new Ui(500, 600, "Knx Client");
     ui->setRootView(root);
     ui->frameRenderer->start();
 
-
     // init database
     Save::init();
+
+    // wait until height is know
+    sleep(1);
+    KnxUi::boxEdit->style->top->set(root->renderer->renderAttributes.height - 200 * fontScale);
+    logm.debug("height: " + str(root->renderer->renderAttributes.height));
 
 
     /*

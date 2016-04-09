@@ -1,7 +1,8 @@
 set (target main)
 
 
-
+# sqlite android
+set (ANDROID_SQLITE_SO  /media/joshua/Daten/Develop/Projekte/libs/sqlite_android/libs/armeabi/libsqlite3.so)
 
 # source files
 set (CMAKE_CURRENT_SOURCE_DIR 	${CMAKE_CURRENT_SOURCE_DIR}/../../)
@@ -23,7 +24,7 @@ link_directories ( ${PANUI_LIBFILE_PATH})
 link_directories ( ${ANDROID_TOOLCHAIN}/arm-linux-androideabi/lib/armv7-a)
 
 ## link libs
-set (LINK_LIBS			SDL2 GLESv1_CM GLESv2 log android c stdc++ panuiAndroid gnustl_shared libfreetype.a  ssl crypto dl )#${PANUI_PATH}/android/lib/libfreetype2-static.a)
+set (LINK_LIBS		${ANDROID_SQLITE_SO}	SDL2 GLESv1_CM GLESv2 log android c stdc++ panuiAndroid gnustl_shared libfreetype.a  ssl crypto dl )#${PANUI_PATH}/android/lib/libfreetype2-static.a)
 
 
 # ### android #################################################################################################
@@ -65,6 +66,7 @@ include_directories(${ANDROID_SYSROOT_INCLUDE})
 include_directories(${ANDROID_SYSROOT_INCLUDE}/SDL)
 include_directories(${ANDROID_SDL_PATH})
 include_directories( /usr/local/ssl/include/ )
+include_directories( /media/joshua/Daten/Develop/Projekte/libs/sqlite_android/build/ ) # sqlite for android
 
 
 
@@ -84,6 +86,7 @@ file(COPY ${ANDROID_SYSROOT_LIB}/libstdc++.so 	DESTINATION ${ANDROID_SO_OUTDIR})
 file(COPY ${ANDROID_SYSROOT_LIB}/libc.so 		DESTINATION ${ANDROID_SO_OUTDIR})
 file(COPY ${ANDROID_SYSROOT_LIB}/libssl.so 		DESTINATION ${ANDROID_SO_OUTDIR})
 file(COPY ${ANDROID_SYSROOT_LIB}/libcrypto.so 	DESTINATION ${ANDROID_SO_OUTDIR})
+file(COPY ${ANDROID_SQLITE_SO}				 	DESTINATION ${ANDROID_SO_OUTDIR})
 
 
 

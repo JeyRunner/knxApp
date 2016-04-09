@@ -32,13 +32,13 @@ void Save::init()
 
     // -- open database
 #ifdef pl_andr
-    char databasePath[] = "home.client.db";
+    char databasePath[] = "/data/data/com.pancake.knxApp/files/home.client.db"; //"/data/data/com.pancake.knxApp/databases/home.client.db";
     #else
     char databasePath[] = "/home/joshua/Schreibtisch/home.client.db";
 #endif
     sqlite3_stmt *stmt;
 
-#ifdef pl_andr
+#ifdef pl_adndr
     // retrieve the JNI environment.
     JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
 
@@ -64,7 +64,6 @@ void Save::init()
 
     AAsset* dbFile = AAssetManager_open(manager, databasePath, AASSET_MODE_STREAMING);
     log.out("open db file", dbFile == NULL, "");
-
     off_t len = AAsset_getLength(dbFile);
 #endif
 
@@ -166,6 +165,61 @@ void Save::init()
 
     string errStr = ok ? "" : string(err);
     log.out("create tables (if not exists)", !ok, errStr);
+
+    // insert
+    sql = "BEGIN TRANSACTION;\n"
+            "INSERT INTO `knxValues` (name,valueId,knxAddr,value) VALUES ('out',14,'12/12/8','0');\n"
+            "INSERT INTO `knxValues` (name,valueId,knxAddr,value) VALUES ('out',17,'12/12/9','1');\n"
+            "INSERT INTO `knxValues` (name,valueId,knxAddr,value) VALUES ('out',18,'12/12/7','1');\n"
+            "INSERT INTO `knxValues` (name,valueId,knxAddr,value) VALUES ('out',19,'','0');\n"
+            "INSERT INTO `knxValues` (name,valueId,knxAddr,value) VALUES ('out',16,'','1');\n"
+            "INSERT INTO `knxValues` (name,valueId,knxAddr,value) VALUES ('out',15,'','1');\n"
+            "INSERT INTO `knxValues` (name,valueId,knxAddr,value) VALUES ('out',20,'','1');\n"
+            "INSERT INTO `knxValues` (name,valueId,knxAddr,value) VALUES ('out',21,'','1');\n"
+            "INSERT INTO `knxValues` (name,valueId,knxAddr,value) VALUES ('out',22,'','1');\n"
+            "INSERT INTO `knxValues` (name,valueId,knxAddr,value) VALUES ('out',23,NULL,'0');\n"
+            "INSERT INTO `knxValues` (name,valueId,knxAddr,value) VALUES ('out',25,NULL,'1');\n"
+            "INSERT INTO `knxValues` (name,valueId,knxAddr,value) VALUES ('out',24,'','1');\n"
+            "INSERT INTO `knxValues` (name,valueId,knxAddr,value) VALUES ('out',26,'','1');\n"
+            "INSERT INTO `knxValues` (name,valueId,knxAddr,value) VALUES ('out',27,NULL,'0');\n"
+            "INSERT INTO `knxValues` (name,valueId,knxAddr,value) VALUES ('out',28,'','0');\n"
+            "INSERT INTO `knxValues` (name,valueId,knxAddr,value) VALUES ('out',29,NULL,'1');\n"
+            "INSERT INTO `knxValues` (name,valueId,knxAddr,value) VALUES ('out',30,'','1');\n"
+            "INSERT INTO `knxValues` (name,valueId,knxAddr,value) VALUES ('in',14,'12/0/1','0');\n"
+            "\n"
+            "INSERT INTO `deviceValues` (id,name,type,value,parentId) VALUES (14,'Licht 1','switch','1',6);\n"
+            "INSERT INTO `deviceValues` (id,name,type,value,parentId) VALUES (15,'Schalter','switch','0',6);\n"
+            "INSERT INTO `deviceValues` (id,name,type,value,parentId) VALUES (16,'Wohnzimmer Licht','switch','0',6);\n"
+            "INSERT INTO `deviceValues` (id,name,type,value,parentId) VALUES (17,'lich,,t6','switch','1',6);\n"
+            "INSERT INTO `deviceValues` (id,name,type,value,parentId) VALUES (18,'lich,,t6','switch','1',6);\n"
+            "INSERT INTO `deviceValues` (id,name,type,value,parentId) VALUES (19,'lich,,t6','switch','0',6);\n"
+            "INSERT INTO `deviceValues` (id,name,type,value,parentId) VALUES (20,'lich,,t6','switch','0',6);\n"
+            "INSERT INTO `deviceValues` (id,name,type,value,parentId) VALUES (21,'lich,,t6','switch','1',6);\n"
+            "INSERT INTO `deviceValues` (id,name,type,value,parentId) VALUES (22,'lich,,t6','switch','1',6);\n"
+            "INSERT INTO `deviceValues` (id,name,type,value,parentId) VALUES (23,'lich,,t6','switch','0',6);\n"
+            "INSERT INTO `deviceValues` (id,name,type,value,parentId) VALUES (24,'lich,,t6','switch','0',6);\n"
+            "INSERT INTO `deviceValues` (id,name,type,value,parentId) VALUES (25,'lich,,t6','switch','1',6);\n"
+            "INSERT INTO `deviceValues` (id,name,type,value,parentId) VALUES (26,'lich,,t6','switch','0',6);\n"
+            "INSERT INTO `deviceValues` (id,name,type,value,parentId) VALUES (27,'lich,,t6','switch','0',6);\n"
+            "INSERT INTO `deviceValues` (id,name,type,value,parentId) VALUES (28,'lich,,t6','switch','1',6);\n"
+            "INSERT INTO `deviceValues` (id,name,type,value,parentId) VALUES (29,'lich,,t6','switch','1',6);\n"
+            "INSERT INTO `deviceValues` (id,name,type,value,parentId) VALUES (30,'lich,,t6','switch','1',6);\n"
+            "\n"
+            "INSERT INTO `container` (id,name,parentId) VALUES (1,': 1',-1);\n"
+            "INSERT INTO `container` (id,name,parentId) VALUES (6,': 6 - parent 1',1);\n"
+            "INSERT INTO `container` (id,name,parentId) VALUES (7,': 7 - parent 1',1);\n"
+            "INSERT INTO `container` (id,name,parentId) VALUES (8,': 8 - parent 5',5);\n"
+            "INSERT INTO `container` (id,name,parentId) VALUES (9,': 9 - parent 7',7);\n"
+            "INSERT INTO `container` (id,name,parentId) VALUES (12,': 10 - parent 10',1);\n"
+            "COMMIT;";
+
+    // execute
+    /*
+    ok = (sqlite3_exec(database, sql.c_str(), NULL, NULL, &err) == SQLITE_OK);
+
+    errStr = ok ? "" : string(err);
+    log.out("insert test entrys ", !ok, errStr);
+     */
 
     // load
     dbLoadElements();

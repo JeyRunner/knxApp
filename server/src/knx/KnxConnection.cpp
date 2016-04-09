@@ -17,7 +17,7 @@
 #include "DisconnectRespose.h"
 
 // -- CREATE OBJECT ------------------
-KnxConnection::KnxConnection(string ip, int port) 
+KnxConnection::KnxConnection(string ip, int port)
 {
     this->serverIp   = ip;
     this->serverPort = port;
@@ -27,7 +27,7 @@ KnxConnection::KnxConnection(string ip, int port)
 
 
 // -- CONNECT -----------------------
-bool KnxConnection::connect() 
+bool KnxConnection::connect()
 {
     bool status;
     
@@ -54,18 +54,18 @@ bool KnxConnection::connect()
 
 // *****************************************************************************************************
 // -- CONNECT STEPS -----------------------------------------------------------------------
-bool KnxConnection::connectServer() 
+bool KnxConnection::connectServer()
 {
-    a("\n[NET ] connect to server [...]");
+    //printOk("connect to server");
     
     // check host ip
     host = gethostbyname(serverIp.c_str());
     if(host == NULL){
-        a("[NET ] ip '"+ string(host->h_name) +"' exists [ERR]");
+        printErr("ip '" + serverIp + "' checked, this is not a ip address");
         return false;
-    }   
-    else 
-        a("[NET ] ip '"+ string(host->h_name) +"' exists [OK]");
+    }
+    else
+        printOk("ip '" + serverIp + "' checked");
     
     
     // server address
@@ -77,34 +77,34 @@ bool KnxConnection::connectServer()
     // create socket
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if(sock <0) {
-        a("[NET ] open socket [ERR]");
+        printErr("open socket");
         return false;
     }
 
+    /* @! causes error on receiveFrom
     struct timeval tv;
     tv.tv_sec = 0;
     tv.tv_usec = 100000;
     if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
         perror("Error");
     }
-    //else
-        //a("[NET ] open socket [OK]");
+    */
     
     
     // client address
     clientAddr.sin_family       = AF_INET;
-    clientAddr.sin_addr.s_addr = INADDR_ANY;
+    clientAddr.sin_addr.s_addr  = INADDR_ANY;
     clientAddr.sin_port         = htons(serverPort);
     
     
     // bind
     int r = bind ( sock, (struct sockaddr *) &clientAddr, sizeof (clientAddr) );
     if(r < 0) {
-        a("[NET ] bind socket [ERR]");
+        printErr("bind socket");
         return false;
     }
     //else
-        //a("[NET ] bind socket [OK]");
+    //a("[NET ] bind socket [OK]");
     
     
     // var
@@ -114,7 +114,7 @@ bool KnxConnection::connectServer()
 }
 
 // -- CONNECTION_REQUEST ---------------------------------------------------
-bool KnxConnection::connectionRequest() 
+bool KnxConnection::connectionRequest()
 {
     //a("\n[NET ] -- connection request -------");
     char requ[26];
@@ -156,24 +156,24 @@ bool KnxConnection::connectionRequest()
     
     sendBytes(requ, 26);
     receiveBytes(recBuff, 20);
+
+    // get chanel id
+    chanelId = recBuff[6];
+
     if(recBuff[7] != 0   || !(recBuff[2]==0x02 && recBuff[3]==0x06) /* CONNECTION_RESPONSE */)
     {
-        a("[GET ] connection response [ERR]: '"/*+ to_string(recBuff[7]) +"'"*/);
+        printErr("get connection response '" + to_string(recBuff[7]) + "'");
         return false;
     }
     else
-        a("[GET ] connection response [OK]");
-        
-    // get chanel id
-    chanelId = recBuff[6];
-    a("[INFO] chanel ID: "/*+ to_string(chanelId) +""*/);
-    
+        printOk("get connection response - chanelId " + to_string(chanelId));
+
     return true;
 }
 
 
 /* -- CONNECTIONSTATE_REQUEST --------------------------------------------------------------- */
-bool KnxConnection::connectionStateRequest() 
+bool KnxConnection::connectionStateRequest()
 {
     //a("\n[NET ] -- connection state request -------");
     char csreq[16];
@@ -204,39 +204,39 @@ bool KnxConnection::connectionStateRequest()
     receiveBytes(recBuff, 8);
     if(recBuff[7] != 0   || !(recBuff[2]==0x02 && recBuff[3]==0x08) /* CONNECTIONSTATE_RESPONSE */)
     {
-        a("[GET ] con state response [ERR]: '" /*+to_string(recBuff[7]) +"'"*/);
+        printErr("get connection state response '" /*+to_string(recBuff[7]) +"'"*/);
         return false;
-    }    
+    }
     else
-        a("[GET ] con state response [OK]");
+        printOk("get connection state response");
     
     // start receive loop
     connected = true;
     startReceiveThread();
-    
-    a("");
+
     return true;
 }
 
 
 
 // -- START RECEIVE THREAD ------------------
-bool KnxConnection::startReceiveThread() 
+bool KnxConnection::startReceiveThread()
 {
     int result;
     result = pthread_create(&thread_receive_id  /*get thread id*/,
                             NULL                    /*thread params => default*/,
                             &thread_receive       /*thread function*/,
                             this                    /*transpher classes to thread*/);
+
     // check if successful
     switch(result)
     {
         case 0:
-            printf("[NET ] create receive thread [OK] \n");
+            //printOk("create receive thread");
             break;
-            
+
         default:
-            printf("[NET ] create receive thread [ERR] \n");
+            printErr("create receive thread");
     }
 }
 
@@ -244,15 +244,14 @@ bool KnxConnection::startReceiveThread()
 // -- RECEIVE THREAD ------------------------
 void *KnxConnection::thread_receive(void* knxConnection)
 {
-    while ( ((KnxConnection*)knxConnection)->connected ) 
+    while ( ((KnxConnection*)knxConnection)->connected )
     {
         ((KnxConnection*)knxConnection)->receiveLoop();
     }
-
 }
 
 // -- RECEIVE LOOP --------------------------   
-void KnxConnection::receiveLoop() 
+void KnxConnection::receiveLoop()
 {
     // var
     char       buffer[30];
@@ -282,7 +281,7 @@ void KnxConnection::receiveLoop()
             TunnelingResponse(this).send();
             break;
         }
-            
+
         case KNX_PACKET_TUNNELING_RESPONSE:
 //            a("[GET ] tunneling response");
             break;
@@ -290,7 +289,7 @@ void KnxConnection::receiveLoop()
 
         case KNX_PACKET_DISCONNECT_REQUEST:
         {
-            a("[GET ] disconnect request");
+            printOk("receive disconnect request");
 
             // send disconnect respose
             DisconnectRespose *respose = new DisconnectRespose(this);
@@ -310,18 +309,18 @@ void KnxConnection::receiveLoop()
         }
 
         case KNX_PACKET_DISCONNECT_RESPONSE:
-            a("[GET ] disconnect response");
-            
+            printOk("receive disconnect response");
+
             // stop receive loop
             connected = false;
-            
+
             // close socket
             close(sock);
 
             onDisconnectFunc();
-            
+
             break;
-            
+
     }
 }
 
@@ -330,21 +329,19 @@ void KnxConnection::receiveLoop()
 
 
 // -- DISCONNECT_REQUEST --------------------   
-bool KnxConnection::disconnect() 
+bool KnxConnection::disconnect()
 {
-    // stop receive loop
-    connected = false;
-    //pthread_cancel(thread_receive_id);
-    
-    
-    a("\n[NET ] disconnect [...]");
+    // send disconnect request
+    DisconnectRequest *request = new DisconnectRequest(this);
+    request->send();
+    //char buffer[request->getTotalLength()];
+    //request->toBytes(buffer);
+    //sendBytes(buffer, request->getTotalLength());
+    printOk("send disconnect request");
 
-    // send disconnect respose
-    DisconnectRespose *respose = new DisconnectRespose(this);
-    char buffer[respose->getTotalLength()];
-    respose->toBytes(buffer);
-    sendBytes(buffer, respose->getTotalLength());
-    
+    // stop receive loop
+    //connected = false;
+    //pthread_cancel(thread_receive_id);
     return true;
 }
 
@@ -356,13 +353,13 @@ bool KnxConnection::disconnect()
 bool KnxConnection::sendBytes(char buffer[], int len)
 {
     int r = sendto(  sock, buffer, len, 0,
-                 (struct sockaddr *) &serverAddr,
-                  sizeof (serverAddr));
+                     (struct sockaddr *) &serverAddr,
+                     sizeof (serverAddr));
     if(r < 0)
     {
-        a("[NET ] send [ERR]");
+        printErr("send");
         return false;
-    } 
+    }
     else
     {
         //a("[NET ] send [OK]");
@@ -378,10 +375,10 @@ bool KnxConnection::receiveBytes(char buffer[], int len)
     memset(buffer, 0, len);
 
     int r = recvfrom( sock, buffer, len /* buffer size */, 0,
-                   ( sockaddr *) &clientAddr,(socklen_t*) &lenCli );
+                      ( sockaddr *) &clientAddr,(socklen_t*) &lenCli );
     if(r < 0)
     {
-        a("[NET ] receive [ERR]");
+        printErr("receive");
         return false;
     }
     else
@@ -401,14 +398,14 @@ bool KnxConnection::receiveBytes(char buffer[], int len)
 
 // *****************************************************************************************************
 // -- SET ON RECEIVE ---------------
-void KnxConnection::onReceiveDataPacket(function<void(TunnelingRequest *packet)> onReceive) 
+void KnxConnection::onReceiveDataPacket(function<void(TunnelingRequest *packet)> onReceive)
 {
     this->onReceivePackerFunc = onReceive;
 }
 
 
 // -- SET ON ERROR -----------------    
-void KnxConnection::onError(function<void(string msg)> onError) 
+void KnxConnection::onError(function<void(string msg)> onError)
 {
     this->onErrorFunc = onError;
 }
@@ -419,14 +416,21 @@ void KnxConnection::onDisconnect(function<void()> onDisconnect)
     this->onDisconnectFunc = onDisconnect;
 }
 
+// -- WAIT DISCONNECTED FINISHED ---------------------
+void KnxConnection::waitDisconnectFinished()
+{
+    pthread_join(thread_receive_id, NULL);
+}
+
 
 // -- OUT --------------------------------------------
-void KnxConnection::a(string a)
+void KnxConnection::printOk(string a)
 {
-    cout << a << endl;
-    
-    if (onErrorFunc)
-        onErrorFunc(a);
+    cout << "[KNX ] [ OK ] " << a << endl;
+}
+void KnxConnection::printErr(string a)
+{
+    cerr << "[KNX ] [ERR ] " << a << endl;
 }
 
 void KnxConnection::ab(char c[], int len)
@@ -438,7 +442,7 @@ void KnxConnection::ab(char c[], int len)
         msg  += "";/*to_string((char)c[i]) + " : "*/;
         count+= "";/*to_string(i)          + " : "*/;
     }
-    a("[GET ] "+ msg +"");
+    printOk("[GET ] " + msg + "");
     // a("[GET ] "+ count +"");
 }
 
@@ -447,7 +451,7 @@ void KnxConnection::ab(char c[], int len)
 
 
 // -- DESTROY ----------------
-KnxConnection::~KnxConnection() 
+KnxConnection::~KnxConnection()
 {
     disconnect();
 }

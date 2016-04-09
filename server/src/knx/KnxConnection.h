@@ -63,14 +63,18 @@ class KnxConnection
         // message listeners
         void onError(function<void(string msg)> onError);
         void onDisconnect(function<void ()> onDisconnect);
-        
+
+        // wait until receive thread ends => receive disconnect response
+        void waitDisconnectFinished();
+
         // var
         string serverIp;
         int    serverPort;
         char   chanelId;
         sockaddr_in clientAddr, serverAddr;
-        
-        void a(string a);
+
+        void printOk(string a);
+        void printErr(string a);
         void ab(char buffer[], int len);
         
         

@@ -64,27 +64,27 @@ KnxPacket* KnxPacket::getPacket(char bytes[], KnxConnection* connection)
     switch (type)
     {
         case KNX_PACKET:
-            cout << "[PACK] make packet type packet '"<< type <<"' [OK]" << endl;
+            cout << "[PACK] [ OK ] make packet type packet '"<< type <<"'" << endl;
             return new KnxPacket(connection);
             
         case KNX_PACKET_TUNNELING_REQUEST:
-            cout << "[PACK] make packet type tunneling request '"<< type <<"' [OK]" << endl;
+            cout << "[PACK] [ OK ] make packet type tunneling request '"<< type <<"'" << endl;
             return new TunnelingRequest(connection, bytes);
             
         case KNX_PACKET_TUNNELING_RESPONSE:
-            cout << "[PACK] make packet type tunneling response '"<< type <<"' [OK]" << endl;
+            cout << "[PACK] [ OK ] make packet type tunneling response '"<< type <<"'" << endl;
             return new TunnelingResponse(connection, bytes);
 
         case KNX_PACKET_DISCONNECT_REQUEST:
-            cout << "[PACK] make packet type disconnect request '"<< type <<"' [OK]" << endl;
+            cout << "[PACK] [ OK ] make packet type disconnect request '"<< type <<"'" << endl;
             return new DisconnectRequest(connection, bytes);
 
         case KNX_PACKET_DISCONNECT_RESPONSE:
-            cout << "[PACK] make packet type disconnect response '"<< type <<"' [OK]" << endl;
+            cout << "[PACK] [ OK ] make packet type disconnect response '"<< type <<"'" << endl;
             return new DisconnectRespose(connection, bytes);
             
         default:
-            cout << "[PACK] unknown packet type '"<< type <<"' [ERR]" << endl;
+            cout << "[PACK] [ERR ] unknown packet type '"<< type <<"'" << endl;
     }
 }
 

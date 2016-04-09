@@ -107,7 +107,7 @@ int main(int argc, char** argv)
 
     // -- MAIN ---- ---------
     // init local database
-    Save::init();
+    //Save::init();
 
     // create knx connection
     knx = new KnxConnection(serverIp, serverPort);
@@ -124,16 +124,22 @@ int main(int argc, char** argv)
     server->init();                              // start
     server->start();
 
-    /*
+
     // not close
     while (true)
     {
         sleep(10000);
 
     }
-    */
+
 
     // -- END  LOOP ---------
+
+
+    // close connections
+    knx->disconnect();
+    knx->waitDisconnectFinished();
+    server->~Server();
 
     // close database
     Save::close();
@@ -205,8 +211,8 @@ void onError(string msg)
 // -- ON DISCONNECT ---------------------
 void onDisconnect()
 {
-    cout << "[KNX ] disconnected" << endl;
+    cerr << "[KNX ] [INFO] disconnected" << endl;
 
     // reconnect
-    knx->connect();
+    //knx->connect();
 }
