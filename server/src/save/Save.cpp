@@ -13,18 +13,21 @@
 #include "Save.h"
 
 // static
-sqlite3* Save::database;
+sqlite3*  Save::database;
+home::Log Save::log;
 
 
 // -- INIT DATABASE ---------------------
 void Save::init()
 {
+    log.setLogName("SAVE", "Save");
+
     char databasePath[] = "/home/joshua/Schreibtisch/home.server2.db";
     sqlite3_stmt *stmt;
 
     // open database
     bool ok = (sqlite3_open(databasePath, &database) == SQLITE_OK);
-    out("open database", ok,
+    log.out("open database", !ok,
         sqlite3_errmsg(database));
 
 
@@ -58,7 +61,7 @@ void Save::init()
     ok = (sqlite3_exec(database, sql.c_str(), NULL, NULL, &err) == SQLITE_OK);
 
     string errStr = ok ? "" : string(err);
-    out("create tables (if not exists)", ok, errStr);
+    log.out("create tables (if not exists)", !ok, errStr);
     // ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 
@@ -68,7 +71,7 @@ void Save::init()
 
     // compile
     sqlite3_prepare_v2(database, sql.c_str(), sql.size(), &stmt, NULL);
-    out("delete data", sqlite3_step(stmt) == SQLITE_DONE, sqlite3_errmsg(database));
+    log.out("delete data", sqlite3_step(stmt) != SQLITE_DONE, sqlite3_errmsg(database));
 
 
 
@@ -96,7 +99,7 @@ void Save::init()
         int id = sqlite3_last_insert_rowid(database);
         sql = "UPDATE deviceValues SET time=" + to_string(id) + "00001 WHERE id=" + to_string(id) + ";";
         sqlite3_exec(database, sql.c_str(), NULL, NULL, NULL);
-        cout << id << endl;
+        //cout << id << endl;
 
         // reset
         sqlite3_clear_bindings(stmt);
@@ -105,7 +108,7 @@ void Save::init()
 
     sqlite3_exec(database, "END TRANSACTION", NULL, NULL, NULL);
     sqlite3_finalize(stmt);
-    out("insert data fished", true);
+    log.out("insert data fished", false);
     // ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 
@@ -115,7 +118,7 @@ void Save::init()
     sql = "SELECT * FROM deviceValues";
 
     ok = sqlite3_prepare_v2(database, sql.c_str(), sql.size(), &stmt, 0) == SQLITE_OK;
-    out("show table", ok,
+    log.out("show table", !ok,
         sqlite3_errmsg(database));
 
 
@@ -138,7 +141,7 @@ void Save::init()
 
             row.append(col_name + ": ").append(col_value).append("(" + to_string(sqlite3_column_type(stmt,i)) + ")   ");
         }
-        cout << row << endl;
+        //cout << row << endl;
     }
     sqlite3_finalize(stmt);
 
@@ -153,24 +156,10 @@ void Save::processConfigPacket()
 }
 
 
-
-
-// -- OUT _______________________________
-void Save::out(string text, bool ok, string error)
-{
-    cout << "[SAVE] " << text << " " << (ok ? "" : ("'"+error+"' ")) << (ok ? "[OK]" : "[ERR]") << endl;
-}
-
-void Save::out(string text, bool ok)
-{
-    out(text, ok, "");
-}
-
-
 // -- CLOSE DATABASE --------------------
 void Save::close()
 {
     // close database
     bool ok = sqlite3_close(database) == SQLITE_OK;
-    out("close database ", ok);
+    log.out("close database ", !ok, sqlite3_errmsg(database));
 }

@@ -33,6 +33,7 @@
 #include <functional>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include "log/Log.h"
 #include "Packet.h"
 #include "PacketFactory.h"
 
@@ -44,7 +45,7 @@ struct Host;
 
 /* Server class
  */
-class Server
+class Server : protected Log
 {
     public:
         Server(int port);

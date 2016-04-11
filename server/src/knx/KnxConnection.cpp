@@ -19,6 +19,8 @@
 // -- CREATE OBJECT ------------------
 KnxConnection::KnxConnection(string ip, int port)
 {
+    setLogName("KNXC", "KnxConnection");
+
     this->serverIp   = ip;
     this->serverPort = port;
     this->connected  = false;
@@ -61,11 +63,11 @@ bool KnxConnection::connectServer()
     // check host ip
     host = gethostbyname(serverIp.c_str());
     if(host == NULL){
-        printErr("ip '" + serverIp + "' checked, this is not a ip address");
+        err("ip '" + serverIp + "' checked, this is not a ip address");
         return false;
     }
     else
-        printOk("ip '" + serverIp + "' checked");
+        ok("ip '" + serverIp + "' checked");
     
     
     // server address
@@ -77,7 +79,7 @@ bool KnxConnection::connectServer()
     // create socket
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if(sock <0) {
-        printErr("open socket");
+        err("open socket");
         return false;
     }
 
@@ -100,7 +102,7 @@ bool KnxConnection::connectServer()
     // bind
     int r = bind ( sock, (struct sockaddr *) &clientAddr, sizeof (clientAddr) );
     if(r < 0) {
-        printErr("bind socket");
+        err("bind socket");
         return false;
     }
     //else
@@ -162,11 +164,11 @@ bool KnxConnection::connectionRequest()
 
     if(recBuff[7] != 0   || !(recBuff[2]==0x02 && recBuff[3]==0x06) /* CONNECTION_RESPONSE */)
     {
-        printErr("get connection response '" + to_string(recBuff[7]) + "'");
+        err("get connection response '" + to_string(recBuff[7]) + "'");
         return false;
     }
     else
-        printOk("get connection response - chanelId " + to_string(chanelId));
+        ok("get connection response - chanelId " + to_string(chanelId));
 
     return true;
 }
@@ -204,11 +206,11 @@ bool KnxConnection::connectionStateRequest()
     receiveBytes(recBuff, 8);
     if(recBuff[7] != 0   || !(recBuff[2]==0x02 && recBuff[3]==0x08) /* CONNECTIONSTATE_RESPONSE */)
     {
-        printErr("get connection state response '" /*+to_string(recBuff[7]) +"'"*/);
+        err("get connection state response '" /*+to_string(recBuff[7]) +"'"*/);
         return false;
     }
     else
-        printOk("get connection state response");
+        ok("get connection state response");
     
     // start receive loop
     connected = true;
@@ -232,11 +234,11 @@ bool KnxConnection::startReceiveThread()
     switch(result)
     {
         case 0:
-            //printOk("create receive thread");
+            ok("create receive thread");
             break;
 
         default:
-            printErr("create receive thread");
+            err("create receive thread");
     }
 }
 
@@ -289,7 +291,7 @@ void KnxConnection::receiveLoop()
 
         case KNX_PACKET_DISCONNECT_REQUEST:
         {
-            printOk("receive disconnect request");
+            ok("receive disconnect request");
 
             // send disconnect respose
             DisconnectRespose *respose = new DisconnectRespose(this);
@@ -309,7 +311,7 @@ void KnxConnection::receiveLoop()
         }
 
         case KNX_PACKET_DISCONNECT_RESPONSE:
-            printOk("receive disconnect response");
+            ok("receive disconnect response");
 
             // stop receive loop
             connected = false;
@@ -337,7 +339,7 @@ bool KnxConnection::disconnect()
     //char buffer[request->getTotalLength()];
     //request->toBytes(buffer);
     //sendBytes(buffer, request->getTotalLength());
-    printOk("send disconnect request");
+    ok("send disconnect request");
 
     // stop receive loop
     //connected = false;
@@ -357,7 +359,7 @@ bool KnxConnection::sendBytes(char buffer[], int len)
                      sizeof (serverAddr));
     if(r < 0)
     {
-        printErr("send");
+        err("send");
         return false;
     }
     else
@@ -378,7 +380,7 @@ bool KnxConnection::receiveBytes(char buffer[], int len)
                       ( sockaddr *) &clientAddr,(socklen_t*) &lenCli );
     if(r < 0)
     {
-        printErr("receive");
+        err("receive");
         return false;
     }
     else
@@ -423,16 +425,6 @@ void KnxConnection::waitDisconnectFinished()
 }
 
 
-// -- OUT --------------------------------------------
-void KnxConnection::printOk(string a)
-{
-    cout << "[KNX ] [ OK ] " << a << endl;
-}
-void KnxConnection::printErr(string a)
-{
-    cerr << "[KNX ] [ERR ] " << a << endl;
-}
-
 void KnxConnection::ab(char c[], int len)
 {
     string msg   = "";
@@ -442,7 +434,7 @@ void KnxConnection::ab(char c[], int len)
         msg  += "";/*to_string((char)c[i]) + " : "*/;
         count+= "";/*to_string(i)          + " : "*/;
     }
-    printOk("[GET ] " + msg + "");
+    info("GET: " + msg + "");
     // a("[GET ] "+ count +"");
 }
 

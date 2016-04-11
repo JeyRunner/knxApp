@@ -15,12 +15,13 @@
 #include "TunnelingRequest.h"
 #include "DisconnectRespose.h"
 #include "DisconnectRequest.h"
+home::Log KnxPacket::log;
 
 
 // -- CREATE OBJECT ---------------------
 
-KnxPacket::KnxPacket() {}
-KnxPacket::KnxPacket(KnxConnection* connection)
+KnxPacket::KnxPacket() {log.setLogName("KNXP", "KnxPacket");}
+KnxPacket::KnxPacket(KnxConnection* connection) : KnxPacket::KnxPacket()
 {
     this->connection = connection;
     
@@ -64,27 +65,27 @@ KnxPacket* KnxPacket::getPacket(char bytes[], KnxConnection* connection)
     switch (type)
     {
         case KNX_PACKET:
-            cout << "[PACK] [ OK ] make packet type packet '"<< type <<"'" << endl;
+            log.trace("make packet type packet '"+ to_string(type) +"'");
             return new KnxPacket(connection);
             
         case KNX_PACKET_TUNNELING_REQUEST:
-            cout << "[PACK] [ OK ] make packet type tunneling request '"<< type <<"'" << endl;
+            log.trace(" make packet type tunneling request '"+ to_string(type) +"'");
             return new TunnelingRequest(connection, bytes);
             
         case KNX_PACKET_TUNNELING_RESPONSE:
-            cout << "[PACK] [ OK ] make packet type tunneling response '"<< type <<"'" << endl;
+            log.trace(" make packet type tunneling response '"+ to_string(type) +"'");
             return new TunnelingResponse(connection, bytes);
 
         case KNX_PACKET_DISCONNECT_REQUEST:
-            cout << "[PACK] [ OK ] make packet type disconnect request '"<< type <<"'" << endl;
+            log.trace("make packet type disconnect request '"+ to_string(type) +"'");
             return new DisconnectRequest(connection, bytes);
 
         case KNX_PACKET_DISCONNECT_RESPONSE:
-            cout << "[PACK] [ OK ] make packet type disconnect response '"<< type <<"'" << endl;
+            log.trace("make packet type disconnect response '"+ to_string(type) +"'");
             return new DisconnectRespose(connection, bytes);
             
         default:
-            cout << "[PACK] [ERR ] unknown packet type '"<< type <<"'" << endl;
+            log.err("unknown packet type '"+ to_string(type) +"'");
     }
 }
 

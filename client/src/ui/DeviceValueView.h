@@ -24,6 +24,9 @@
 #include <SqlEntry.h>
 #include "ContainerView.h"
 
+using ui::Box;
+using ui::Text;
+using ui::View;
 using namespace std;
 class ContainerView;
 

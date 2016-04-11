@@ -19,6 +19,7 @@
 #include <string>
 #include <stdlib.h>
 #include <sqlite3.h>
+#include "Log.h"
 
 using namespace std;
 
@@ -35,11 +36,7 @@ class Save
     private:
         // database
         static sqlite3 *database;
-
-
-        static void out(string text, bool ok, string error);
-        static void out(string text, bool ok);
-
+        static home::Log log;
 };
 
 #endif /* KNX_SAVE_H */

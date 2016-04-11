@@ -20,6 +20,9 @@
 #include <Box.h>
 #include <Text.h>
 
+using ui::Box;
+using ui::Text;
+using ui::View;
 using namespace std;
 
 

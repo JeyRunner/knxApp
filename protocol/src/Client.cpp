@@ -22,6 +22,7 @@ using namespace home;
 // -- CREATE OBJECT ---------------------
 Client::Client(string ip, int port)
 {
+    setLogName("CLIE", "HomeClient");
     this->serverIp = ip;
     this->serverPort = port;
     this->connected = false;
@@ -41,7 +42,7 @@ void Client::init()
     ctx = SSL_CTX_new(method);      // create new context
     if (ctx == NULL)
     {
-        error("[CLIE] ssl ctx new [ERR]");
+        err("ssl ctx new");
         // ERR_print_errors(stderr);
     }
 }
@@ -50,17 +51,17 @@ void Client::init()
 // -- CONNECT TO SERVER -----------------
 bool Client::connectToServer()
 {
-    cout << "[CLIE] connect to server [...]" << endl;
+    info("connect to server ...");
 
     // check host ip
     host = gethostbyname(serverIp.c_str());
     if (host == NULL)
     {
-        error("server ip '" + serverIp + "' dose not exists");
+        err("server ip '" + serverIp + "' dose not exists");
         return false;
     }
     else
-        cout << "[CLIE] ip '" + string(host->h_name) + "' exists [OK]" << endl;
+        ok("ip '" + string(host->h_name) + "' exists");
 
 
     // server address
@@ -73,8 +74,7 @@ bool Client::connectToServer()
     sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0)
     {
-        error("open socket to server");
-        perror("[CLIE] open socket [ERR]");
+        err("open socket to server");
         return false;
     }
 
@@ -83,14 +83,13 @@ bool Client::connectToServer()
     int r = connect(sock, (struct sockaddr*)&serverAddr, sizeof(serverAddr)); //bind(sockServer, (struct sockaddr *) &clientAddr, sizeof(clientAddr));
     if (r < 0)
     {
-        error("can not connect socket to server");
+        err("can not connect socket to server");
         onDisconnectFunc();
-        perror("[CLIE] connect socket to server [ERR]");
         return false;
     }
     else
     {
-        cout << "[CLIE] connect [OK]" << endl;
+        ok("connect to server");
     }
 
 
@@ -101,14 +100,14 @@ bool Client::connectToServer()
     // ssl connect
     if ( SSL_connect(ssl) < 0)
     {
-        error("can not create ssl connection");
+        err("can not create ssl connection");
         // ERR_print_errors(stderr);
         disconnect();
         return      false;
     }
     else
     {
-        cout << "[CLIE] ssl connect [OK]" << endl;
+        ok("create ssl connection");
     }
 
     // show certificates from server
@@ -151,11 +150,11 @@ bool Client::startReceiveThread()
     switch (result)
     {
         case 0:
-            cout << "[CLIE] create receive thread [OK] \n";
+            ok("create receive thread");
             break;
 
         default:
-            error("can not create receive thread");
+            err("can not create receive thread");
     }
 }
 
@@ -200,10 +199,10 @@ bool Client::sendBytes(char buffer[], int len)
     if (r < 0)
     {
         char errBuff[256];
-        int err = SSL_get_error(ssl, r);
+        int error = SSL_get_error(ssl, r);
         ERR_error_string(ERR_get_error(), errBuff);
 
-        error("can not write to server via ssl'" + string(errBuff) + "' (" + to_string(err) + ")");
+        err("can not write to server via ssl'" + string(errBuff) +  "' (" + to_string(error) + ")");
         disconnect();
     }
 
@@ -225,10 +224,10 @@ bool Client::receiveBytes(char buffer[], int len)
     if (numBytes < 0)
     {
         char errBuff[256];
-        int err = SSL_get_error(ssl, numBytes);
+        int error = SSL_get_error(ssl, numBytes);
         ERR_error_string(ERR_get_error(), errBuff);
 
-        error("can not read from server via ssl '" + string(errBuff) + "' (" + to_string(err) + ")");
+        err("can not read from server via ssl '" + string(errBuff) + "' (" + to_string(error) + ")");
 
         disconnect();
     }
@@ -239,7 +238,7 @@ bool Client::receiveBytes(char buffer[], int len)
     else if (numBytes == 0)
     {
         // out
-        error("server is disconnected");
+        err("server is disconnected");
 
         disconnect();
         return false;
@@ -271,17 +270,17 @@ void Client::printCertificates(SSL *ssl)
     cert = SSL_get_peer_certificate(ssl); /* Get certificates (if available) */
     if ( cert != NULL )
     {
-        printf("[CLIE] Server certificates:\n");
+        info("Server certificates:");
         line = X509_NAME_oneline(X509_get_subject_name(cert), 0, 0);
-        printf("[CLIE] Subject: %s\n", line);
+        info("Subject: " + to_string(line));
         free(line);
         line = X509_NAME_oneline(X509_get_issuer_name(cert), 0, 0);
-        printf("[CLIE] Issuer: %s\n", line);
+        info("Issuer: " + to_string(line));
         free(line);
         X509_free(cert);
     }
     else
-        printf("[CLIE] No certificates. [ERR] \n");
+        err("No certificates");
 }
 
 

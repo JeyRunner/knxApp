@@ -11,7 +11,7 @@
  */
 
 #include "Server.h"
-#include "to_string.cpp"
+#include <to_string.cpp>
 
 using namespace home;
 #ifdef pl_andr
@@ -29,6 +29,8 @@ Server::Server(int port)
 // -- INIT ------------------------------
 void Server::init()
 {
+    setLogName("SERV", "HomeServer");
+
     const SSL_METHOD *method;
 
     // init lib
@@ -41,7 +43,7 @@ void Server::init()
     if (ctx == NULL)
     {
         // ERR_print_errors(stderr);
-        error("[SERV] ssl ctx new [ERR]");
+        err("ssl ctx new");
     }
 
     // load certificate
@@ -66,7 +68,7 @@ bool Server::start()
     sockServer = socket(AF_INET, SOCK_STREAM, 0);
     if (sockServer < 0)
     {
-        error("[SERV] create socket [ERR]");
+        err("create socket");
         connected = false;
         return false;
     }
@@ -74,7 +76,7 @@ bool Server::start()
     // bind
     if (bind(sockServer, (struct sockaddr *) &serverAddr, sizeof(serverAddr)) < 0)
     {
-        error("[SERV] bind socket to port [ERR]");
+        err("bind socket to port");
         perror("[SERV] bind socket to port [ERR]");
         connected = false;
         return false;
@@ -83,7 +85,7 @@ bool Server::start()
     // listen
     if (listen(sockServer, 10) != 0)
     {
-        error("[SERV] listen [ERR]");
+        err("listen");
         perror("[SERV] listen [ERR]");
         connected = false;
         return false;
@@ -114,11 +116,11 @@ bool Server::startReceiveThread()
     switch (result)
     {
         case 0:
-            cout << "[SERV] create receive thread [OK] \n";
+            ok("create receive thread");
             break;
 
         default:
-            error("[SERV] create receive thread [ERR] \n");
+            err("create receive thread");
     }
 }
 
@@ -167,11 +169,11 @@ void Server::receiveLoop()
         client = accept(sockServer, (struct sockaddr *) &clientAddr, &clientAddrLen);
         if (client < 0)
         {
-            error("[SERV] accept [ERR]");
+            err("accept new client");
         }
         else
         {
-            error("[SERV] new client '" + string(inet_ntoa(clientAddr.sin_addr)) + "' [OK]");
+            ok("new client '" + string(inet_ntoa(clientAddr.sin_addr)) + "'");
         }
 
         // ssl
@@ -181,7 +183,7 @@ void Server::receiveLoop()
         // SSL-protocol accept
         if (SSL_accept(clientssl) < 0)
         {
-            error("[SERV] ssl accept [ERR]");
+            err("ssl accept");
             ERR_print_errors_fp(stderr);
         }
         else
@@ -220,10 +222,9 @@ void Server::receiveLoop()
             if (numBytes < 0)
             {
                 char errBuff[256];
-                int err = SSL_get_error((*current)->ssl, numBytes);
+                int error = SSL_get_error((*current)->ssl, numBytes);
                 ERR_error_string(ERR_get_error(), errBuff);
-
-                error("[SERV] ssl read '" + string(errBuff) + "' (" + to_string(err) + ") [ERR]");
+                err("ssl read '" + string(errBuff) + "' (" + to_string(error) + ")");
 
                 // next client
                 current++;
@@ -246,7 +247,7 @@ void Server::receiveLoop()
                 socksClients.erase(current++);  // got to next
 
                 // out
-                error("[SERV] remove client '" + ip + "' [OK]");
+                ok("remove client '" + ip + "'");
 
                 // show clients
                 printClients();
@@ -291,21 +292,21 @@ bool Server::loadCertificates(string CertiticateFile, string keyFile)
     // set the local certificate from CertFile
     if (SSL_CTX_use_certificate_file(ctx, CertiticateFile.c_str(), SSL_FILETYPE_PEM) <= 0)
     {
-        error("[SERV] load local certificate from CertiticateFile [ERR]");
+        err("load local certificate from CertiticateFile");
         ERR_print_errors_fp(stderr);
         return false;
     }
     // set the private key from KeyFile (may be the same as CertFile)
     if (SSL_CTX_use_PrivateKey_file(ctx, keyFile.c_str(), SSL_FILETYPE_PEM) <= 0)
     {
-        error("[SERV] load private key from KeyFile [ERR]");
+        err("load private key from KeyFile");
         ERR_print_errors_fp(stderr);
         return false;
     }
     // verify private key
     if (!SSL_CTX_check_private_key(ctx))
     {
-        error("[SERV] private key does not match the public certificate [ERR]");
+        err("private key does not match the public certificate");
         return false;
     }
 
@@ -322,28 +323,28 @@ void Server::printCertificates(SSL *ssl)
     cert = SSL_get_peer_certificate(ssl); /* Get certificates (if available) */
     if (cert != NULL)
     {
-        printf("[SERV] Server certificates:\n");
+        info("Server certificates:");
         line = X509_NAME_oneline(X509_get_subject_name(cert), 0, 0);
-        printf("[SERV] Subject: %s\n", line);
+        info("Subject: " + to_string(line));
         free(line);
         line = X509_NAME_oneline(X509_get_issuer_name(cert), 0, 0);
-        printf("[SERV] Issuer: %s\n", line);
+        info("Issuer: " + to_string(line));
         free(line);
         X509_free(cert);
     }
     else
-        printf("[SERV] No certificates. [ERR] \n");
+        err("No certificates - can not print certificates");
 }
 
 // -- PRINT CLIENTS ------------------------
 void Server::printClients()
 {
     // headline
-    cout << "[SERV] Clients:" << endl;
+    info("Clients:");
 
     for ( Host *current : socksClients )
     {
-        cout << "[SERV] Client: nr." << current->socket << " '" << current->ip << "'" << endl;
+        info("Client: nr." + to_string(current->socket) + " '" + current->ip + "'");
     }
 }
 

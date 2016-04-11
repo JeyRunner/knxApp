@@ -14,6 +14,7 @@
 #define	KNXPACKET_H
 
 #include "KnxConnection.h"
+#include "Log.h"
 //#include "out.hpp"
 
 
@@ -55,6 +56,9 @@ class KnxPacket
         short getType();
         void  setTotalLength(short length);
         short getTotalLength();
+
+    private:
+        static home::Log log;
 };
 
 

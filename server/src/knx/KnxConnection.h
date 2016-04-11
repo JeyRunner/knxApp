@@ -32,13 +32,14 @@
 #include <functional>
 #include <stdlib.h>
 #include <string>
+#include "Log.h"
 //#include "out.hpp"
 
 class TunnelingRequest;
 using namespace std;
 
 
-class KnxConnection 
+class KnxConnection : protected home::Log
 {
     public:
         KnxConnection(string ip, int port);
@@ -73,8 +74,6 @@ class KnxConnection
         char   chanelId;
         sockaddr_in clientAddr, serverAddr;
 
-        void printOk(string a);
-        void printErr(string a);
         void ab(char buffer[], int len);
         
         

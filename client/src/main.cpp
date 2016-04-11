@@ -17,6 +17,7 @@
 #include <Box.h>
 #include <Style.h>
 #include <Log.h>
+#include <log/Log.h>
 #include "ui/Alert.h"
 #include "ui/ContainerView.h"
 #include "ui/KnxUi.h"
@@ -26,8 +27,18 @@
 #include <Client.h>
 #include <to_string.cpp>
 #include <Renderer.h>
+#include "log/Log.h"
 
-
+using ui::Ui;
+using ui::Box;
+using ui::Text;
+using ui::Style;
+using ui::StyleRule;
+using ui::UI_ATTR_POSITION_ABSOLUTE;
+using ui::Point;
+using ui::str;
+using home::Log;
+using home::LOG_LEVEL_ALL;
 using namespace std;
 
 
@@ -37,7 +48,7 @@ const int       SERVER_PORT = 5049;
 home::Client *client;
 
 // ui
-Ui *ui;
+Ui *uiMain;
 Box *root;
 Text *headline;
 Text *out;
@@ -56,13 +67,17 @@ void onReceive(home::Packet *packet);
  */
 int main(int argc, char **argv)
 {
+    // init log
+    ui::Log::setLogLevel(ui::UI_LOG_LEVEL_ERROR | ui::UI_LOG_LEVEL_WARNING);
+    ui::Log::setUseColor(false);
+    Log::setLogLevel(LOG_LEVEL_ALL);
+
     // start
     logm.setLogName("MAIN");
     logm.ok("start program");
 
     // init ui
     Ui::init();
-    Log::setLogLevel(UI_LOG_LEVEL_DEBUG);
 
     KnxUi::modeEdit = false;
     KnxUi::editing  = NULL;
@@ -197,9 +212,9 @@ int main(int argc, char **argv)
 
 
     // open screen
-    ui = new Ui(500, 600, "Knx Client");
-    ui->setRootView(root);
-    ui->frameRenderer->start();
+    uiMain = new Ui(500, 600, "Knx Client");
+    uiMain->setRootView(root);
+    uiMain->frameRenderer->start();
 
     // init database
     Save::init();
@@ -250,6 +265,11 @@ int main(int argc, char **argv)
     client->onError(&onError);
     client->onReceive(&onReceive);
     client->onDisconnect(&onDisconnect);
+
+    /*Log log1;
+    log1.setLogName("bla", "blalallala");
+    log1.ok("hallo?");
+    */
 
     // init
     client->init();

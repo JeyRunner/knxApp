@@ -10,6 +10,7 @@
  */
 
 #include "Alert.h"
+using namespace ui;
 
 
 // -- CREATE OBJECT ----------------

@@ -8,10 +8,8 @@ set (ANDROID_SQLITE_SO  /media/joshua/Daten/Develop/Projekte/libs/sqlite_android
 set (CMAKE_CURRENT_SOURCE_DIR 	${CMAKE_CURRENT_SOURCE_DIR}/../../)
 set (srcDir 					${CMAKE_CURRENT_SOURCE_DIR}src/)
 set (srcDirUi					${srcDir}ui/)
-set (srcDirProtocol				${CMAKE_CURRENT_SOURCE_DIR}../protocol/src/)
 
 file( GLOB srcs ${srcDir}*.cpp ${srcDir}*.h   ${srcDir}knx/*.cpp ${srcDir}knx/*.h  ${srcDir}knx/*.hpp  ${srcDir}SDL/*.cpp   ${srcDirUi}*.cpp ${srcDirUi}*.h )
-file( GLOB srcProtocol ${srcDirProtocol}*.cpp ${srcDirProtocol}*.h)
 
 # var
 set (ANDROID_NDK_CPU		armeabi-v7a)
@@ -50,7 +48,7 @@ link_directories(${LIB_FREETYPE_STATIC})
 link_directories(/usr/local/ssl/lib)
 
 # create lib
-add_library (${target} SHARED ${srcProtocol} ${srcs} ${srcSDL})
+add_library (${target} SHARED ${SRC_FILES_PROTOCOL} ${srcs} ${srcSDL})
 
 
 # set the output directory for the .so files to point to the android project's 'lib/[cpuarch] directory

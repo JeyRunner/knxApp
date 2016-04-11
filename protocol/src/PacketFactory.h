@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include "Packet.h"
 #include "KnxPacket.h"
+#include "Log.h"
 
 
 using namespace std;
@@ -34,7 +35,10 @@ class PacketFactory
 {
     public:
         // create packet form bytes
-        static home::Packet *createPacket(char bytes[]);
+        static Packet *createPacket(char bytes[]);
+
+    private:
+        static Log log;
 };
 
 

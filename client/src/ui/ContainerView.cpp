@@ -15,6 +15,7 @@
  */
 
 #include "ContainerView.h"
+using namespace ui;
 
 
 // -- CREATE OBJECT ---------------------

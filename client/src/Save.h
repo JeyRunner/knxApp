@@ -37,6 +37,7 @@
 class ContainerView;
 class DeviceValueView;
 
+using home::Log;
 using namespace std;
 
 

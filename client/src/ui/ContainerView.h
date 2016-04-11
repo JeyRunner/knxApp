@@ -27,6 +27,9 @@
 #include "../Save.h"
 #include <SqlEntry.h>
 
+using ui::Box;
+using ui::Text;
+using ui::View;
 using namespace std;
 
 

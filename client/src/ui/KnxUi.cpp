@@ -10,6 +10,8 @@
  */
 
 #include "KnxUi.h"
+using namespace ui;
+
 
 // static
 bool    KnxUi::modeEdit;

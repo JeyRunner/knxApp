@@ -32,6 +32,7 @@
 #include <functional>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include "log/Log.h"
 #include "Packet.h"
 #include "PacketFactory.h"
 
@@ -41,7 +42,7 @@ namespace home
 
 /* Client class
  */
-class Client
+class Client : protected Log
 {
     public:
         Client(string ip, int port);

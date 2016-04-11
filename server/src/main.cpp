@@ -21,6 +21,7 @@
 
 using namespace std;
 
+home::Log logm;
 
 // knx ip router
 const string    serverIp   = "192.168.1.164";
@@ -48,6 +49,12 @@ void onDisconnect();
 // ## START DAEMON ####################
 int main(int argc, char** argv)
 {
+    logm.setLogName("MAIN", "main");
+
+    // config Log
+    home::Log::setLogLevel(home::LOG_LEVEL_ALL ^ home::LOG_LEVEL_TRACE);
+    home::Log::setUseLongLogNames(false);
+
     /*
     //Set our Logging Mask and open the Log
     setlogmask(LOG_UPTO(LOG_NOTICE));
@@ -107,7 +114,7 @@ int main(int argc, char** argv)
 
     // -- MAIN ---- ---------
     // init local database
-    //Save::init();
+    Save::init();
 
     // create knx connection
     knx = new KnxConnection(serverIp, serverPort);
@@ -124,13 +131,13 @@ int main(int argc, char** argv)
     server->init();                              // start
     server->start();
 
-
+    /*
     // not close
     while (true)
     {
         sleep(10000);
 
-    }
+    }*/
 
 
     // -- END  LOOP ---------
@@ -211,7 +218,7 @@ void onError(string msg)
 // -- ON DISCONNECT ---------------------
 void onDisconnect()
 {
-    cerr << "[KNX ] [INFO] disconnected" << endl;
+    logm.info("disconnected from knx router");
 
     // reconnect
     //knx->connect();

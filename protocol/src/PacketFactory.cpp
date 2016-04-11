@@ -12,12 +12,16 @@
  */
 
 #include "PacketFactory.h"
+#include "Log.h"
 using namespace home;
+home::Log PacketFactory::log;
 
 
 // -- CREATE PACKET ---------------------
 Packet* PacketFactory::createPacket(char bytes[])
 {
+    log.setLogName("PFAC");
+
     // decide by packettype field
     switch (bytes[0])
     {
@@ -29,7 +33,7 @@ Packet* PacketFactory::createPacket(char bytes[])
             break;
 
         default:
-            cout << "[PFAC] unkown packettype '"<< bytes[0] <<"' [ERR]" << endl;
+            log.err("unkown packettype '"+ to_string(bytes[0]) +"'");
             return new Packet(bytes);
     }
 }

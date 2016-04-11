@@ -13,6 +13,7 @@
 #include <StyleRule.h>
 #include "DeviceValueView.h"
 #include "KnxUi.h"
+using namespace ui;
 
 
 // -- CREATE OBJECT ---------------------

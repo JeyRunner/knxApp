@@ -21,6 +21,9 @@
 #include <Text.h>
 #include <Style.h>
 
+using ui::Box;
+using ui::Text;
+using ui::View;
 using namespace std;
 
 
